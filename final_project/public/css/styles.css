@@ -191,6 +191,12 @@ header {
     font-size: 14px;
 
 }
+
+#barChart {
+    float: left;
+    margin-right: 20px;
+
+}
 */
 /* Styles that clean up the layout;
  * you can ignore these: */
