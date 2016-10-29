@@ -7,14 +7,14 @@
  * @param electionInfo instance of ElectionInfo
  * @param electionWinners data corresponding to the winning parties over mutiple election years
  */
-function BarChart(schools) {
+function BarChart() {
+    console.log('2')
     var self = this;
 
     // self.electoralVoteChart = electoralVoteChart;
     // self.tileChart = tileChart;
     // self.votePercentageChart = votePercentageChart;
     // self.shiftChart = shiftChart;
-    self.schools = schools;
     self.init();
 };
 
@@ -23,10 +23,11 @@ function BarChart(schools) {
  */
 BarChart.prototype.init = function(){
     var self = this;
+    console.log('3')
     self.margin = {top: 10, right: 20, bottom: 30, left: 50};
-    var divBarChart = d3.select("#barChart") //.classed("fullView", true);
+    var divBarChart = d3.select("#barChart").classed("content", true);
 
-    //Gets access to the div element created for this chart from HTML
+    // //Gets access to the div element created for this chart from HTML
     self.svgBounds = divBarChart.node().getBoundingClientRect();
     self.svgWidth = 500 //self.svgBounds.width - self.margin.left - self.margin.right;
     self.svgHeight = 500 //self.svgBounds.height;
@@ -47,8 +48,9 @@ BarChart.prototype.init = function(){
 /**
  * Creates a chart with circles representing each election year, populates text content and other required elements for the Year Chart
  */
-BarChart.prototype.update = function () { //function(selectedDimension){
+BarChart.prototype.update = function (schools) { //function(selectedDimension){
     var self = this;
+    console.log(schools)
     //var chartWidth = 
     //Domain definition for global color scale
     // var domain = [-60,-50,-40,-30,-20,-10,0,10,20,30,40,50,60 ];
@@ -75,30 +77,23 @@ BarChart.prototype.update = function () { //function(selectedDimension){
     //     .range([self.svgWidth, 0]).padding(.1)
 
     var yScale = d3.scaleLinear()
-        .domain([0, d3.max(self.schools, function (d) {
+        .domain([0, d3.max(schools, function (d) {
             return +d.SAT_AVG_ALL;
         })])
         .range([0, self.svgHeight]);
 
     var xScale = d3.scaleBand()
-        .domain(self.schools.map(function (d) {
+        .domain(schools.map(function (d) {
             return d.INSTNM; 
     }))
         .range([self.svgWidth, 0]).padding(.1)
 
+    // var plotSelector = d3.select("#barChart").select("#plot-selector").select('#dataset')
+    //     .on('change', function (d) {return self.chooseMetric()})
+
     var barChart = d3.select("#barChart").select('svg').select('g')
 
-    //Style the chart by adding a dashed line that connects all these years.
-    //HINT: Use .lineChart to style this dashed line
-
-    // barChart.append('line')
-    //     .attr('class', 'lineChart')
-    //     .attr('x1', self.margin.left)
-    //     .attr('x2', self.margin.left + self.svgWidth + self.margin.right)
-    //     .attr('y1', self.yCenter)
-    //     .attr('y2', self.yCenter)
-
-    var bars = barChart.selectAll('rect').data(self.schools)
+    var bars = barChart.selectAll('rect').data(schools)
 
     bars
         .enter()
@@ -139,6 +134,9 @@ BarChart.prototype.update = function () { //function(selectedDimension){
     //HINT: Use the .brush class to style the brush.
 }
 
+BarChart.prototype.chooseMetric = function(d) {
+    console.log('here')
+}
 // BarChart.prototype.yearClickEvent = function(d) {
 //     // body...
 

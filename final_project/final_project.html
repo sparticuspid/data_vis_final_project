@@ -12,9 +12,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.19/topojson.min.js"></script>
     <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-    <script type="application/javascript" src="public/js/script.js"></script>
-    <script type="application/javascript" src="public/js/barChart.js"></script>
-    <script type="application/javascript" src="public/js/main.js"></script>
     <style>
         path {
             fill: none;
@@ -73,12 +70,11 @@
   <ol id="school-list"></ol>
 </div>
 
-<!-- <div id="barChart" class="view"> -->
 <div id="barChart">
   <h2>Bar Chart</h2>
   <div id="plot-selector">
-    <label>Plot:</label>
-    <select id="dataset" onchange="chooseData()">
+    <label> Plot:</label>
+    <select id="dataset">
         <option selected value="tuition">Tuition</option>
         <option value="sat_avg">Average SAT</option>
         <option value="adm_rate">Admission Rate</option>
@@ -86,6 +82,8 @@
     </div>
 </div>
 
-
+<script type="application/javascript" src="public/js/barChart.js"></script>
+<script type="application/javascript" src="public/js/script.js"></script>
+<script type="application/javascript" src="public/js/main.js"></script>
 </body>
 </html>

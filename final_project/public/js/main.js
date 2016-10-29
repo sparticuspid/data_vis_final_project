@@ -9,6 +9,7 @@
      * the classes are defined in the respective javascript files.
      */
     function init() {
+        self = this;
         //Creating instances for each visualization
         // var barChart = new BarChart();
 
@@ -18,14 +19,15 @@
 
         // var electoralVoteChart = new ElectoralVoteChart(shiftChart);
 
+        console.log('1')
+        var barChart = new BarChart();
 
         //load the data corresponding to all the election years
         //pass this data and instances of all the charts that update on year selection to yearChart's constructor
-        d3.csv("data/School_Data.csv", function (error, schools) {
+        d3.csv("data/School_Data.csv", function (data) {
             //pass the instances of all the charts that update on selection change in YearChart
-            var barChart = new BarChart(schools);
-            barChart.update()
-
+            schoolData = data;
+            var script = new Script(barChart, schoolData)
         });
 
     //     d3.csv('data/Year_Timeline_2012.csv', function (error, csv) {
