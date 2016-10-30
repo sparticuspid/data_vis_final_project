@@ -29,7 +29,7 @@ BarChart.prototype.init = function(){
     // //Gets access to the div element created for this chart from HTML
     self.svgBounds = divBarChart.node().getBoundingClientRect();
     self.svgWidth = 500 //self.svgBounds.width - self.margin.left - self.margin.right;
-    self.svgHeight = 500 //self.svgBounds.height;
+    self.svgHeight = 300 //self.svgBounds.height;
 
     //creates svg element within the div
     self.svg = divBarChart.append("svg")

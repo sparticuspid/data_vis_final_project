@@ -19,7 +19,6 @@
 
         // var electoralVoteChart = new ElectoralVoteChart(shiftChart);
 
-        console.log('1')
         var barChart = new BarChart();
 
         //load the data corresponding to all the election years
@@ -27,7 +26,11 @@
         d3.csv("data/School_Data.csv", function (data) {
             //pass the instances of all the charts that update on selection change in YearChart
             schoolData = data;
-            var script = new Script(barChart, schoolData)
+            var sliderLayout = new SliderLayout(schoolData);
+            var script = new Script(barChart, schoolData);
+            
+            console.log('sliderLayoutUpdate')
+            sliderLayout.update()
         });
 
     //     d3.csv('data/Year_Timeline_2012.csv', function (error, csv) {
