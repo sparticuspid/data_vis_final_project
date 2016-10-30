@@ -10,7 +10,6 @@
 function BarChart() {
     console.log('2')
     var self = this;
-
     // self.electoralVoteChart = electoralVoteChart;
     // self.tileChart = tileChart;
     // self.votePercentageChart = votePercentageChart;
@@ -43,14 +42,17 @@ BarChart.prototype.init = function(){
         .attr("height",self.svgHeight)
         .attr("transform", "translate(0," +  self.svgHeight + ") scale(1, -1)")
 
+    self.schools
+    self.selectedMetric = 'COST'
 };
 
 /**
  * Creates a chart with circles representing each election year, populates text content and other required elements for the Year Chart
  */
-BarChart.prototype.update = function (schools) { //function(selectedDimension){
+
+BarChart.prototype.update = function () { //function(selectedDimension){
     var self = this;
-    console.log(schools)
+    console.log(self.schools)
     //var chartWidth = 
     //Domain definition for global color scale
     // var domain = [-60,-50,-40,-30,-20,-10,0,10,20,30,40,50,60 ];
@@ -77,23 +79,23 @@ BarChart.prototype.update = function (schools) { //function(selectedDimension){
     //     .range([self.svgWidth, 0]).padding(.1)
 
     var yScale = d3.scaleLinear()
-        .domain([0, d3.max(schools, function (d) {
-            return +d.SAT_AVG_ALL;
+        .domain([0, d3.max(self.schools, function (d) {
+            return +d[self.selectedMetric];
         })])
         .range([0, self.svgHeight]);
 
     var xScale = d3.scaleBand()
-        .domain(schools.map(function (d) {
+        .domain(self.schools.map(function (d) {
             return d.INSTNM; 
     }))
         .range([self.svgWidth, 0]).padding(.1)
 
-    // var plotSelector = d3.select("#barChart").select("#plot-selector").select('#dataset')
-    //     .on('change', function (d) {return self.chooseMetric()})
+    var plotSelector = d3.select("#barChart").select("#plot-selector").select('#dataset')
+        .on('change', function (d) {return self.chooseMetric()})
 
     var barChart = d3.select("#barChart").select('svg').select('g')
 
-    var bars = barChart.selectAll('rect').data(schools)
+    var bars = barChart.selectAll('rect').data(self.schools)
 
     bars
         .enter()
@@ -101,7 +103,7 @@ BarChart.prototype.update = function (schools) { //function(selectedDimension){
         .merge(bars)
         .attr('x', function (d,i) {return xScale(d.INSTNM)})
         .attr('y', 0)
-        .attr('height', function (d) {return yScale(+d.SAT_AVG_ALL)})
+        .attr('height', function (d) {return yScale(+d[self.selectedMetric])})
         .attr('width', xScale.bandwidth())
         .attr('fill', 'blue')
 
@@ -134,8 +136,11 @@ BarChart.prototype.update = function (schools) { //function(selectedDimension){
     //HINT: Use the .brush class to style the brush.
 }
 
-BarChart.prototype.chooseMetric = function(d) {
-    console.log('here')
+BarChart.prototype.chooseMetric = function() {
+    var self = this
+    self.selectedMetric = document.getElementById('dataset').value
+    console.log(self.selectedMetric)
+    self.update();
 }
 // BarChart.prototype.yearClickEvent = function(d) {
 //     // body...
@@ -160,3 +165,9 @@ BarChart.prototype.chooseMetric = function(d) {
 
 //     })
 // };
+
+BarChart.prototype.updateData = function (schools) {
+    var self = this
+    self.schools = schools
+    self.update()
+}

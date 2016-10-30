@@ -87,7 +87,7 @@ Script.prototype.updateMainInfo = function (selectedSchool) {
 	);
     }
 
-    self.barChart.update(similarSchoolsArray)
+    self.barChart.updateData(similarSchoolsArray)
     
     //Pretty straightforward.
     d3.select('#topschool').select('#schoolname').text(selectedSchoolData.INSTNM);
