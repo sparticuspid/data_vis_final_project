@@ -26,9 +26,8 @@
         d3.csv("data/School_Data.csv", function (data) {
             //pass the instances of all the charts that update on selection change in YearChart
             schoolData = data;
-            var sliderLayout = new SliderLayout(schoolData);
             var script = new Script(barChart, schoolData);
-            
+            var sliderLayout = new SliderLayout(barChart, schoolData);
             console.log('sliderLayoutUpdate')
             sliderLayout.update()
         });

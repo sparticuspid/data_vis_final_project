@@ -7,9 +7,11 @@
  * @param electionInfo instance of ElectionInfo
  * @param electionWinners data corresponding to the winning parties over mutiple election years
  */
-function SliderLayout(schoolData) {
+function SliderLayout(barChart, schoolData) {
     var self = this;
-    self.schools = schoolData
+
+    self.barChart = barChart
+    self.schoolData = schoolData
     self.init();
 };
 
@@ -18,11 +20,16 @@ function SliderLayout(schoolData) {
  */
 SliderLayout.prototype.init = function(){
     var self = this;
-    self.tuitionBrushCoordinates = []
-    self.sizeBrushCoordinates = []
-    self.SAT_BrushCoordinates = []
-    self.admRateBrushCoordinates = []
-
+    self.tuitionBrushCoordinates = [d3.min(self.schoolData, function (d) {return +d['COST']}),
+                                    d3.max(self.schoolData, function (d) {return +d['COST']})]
+    self.sizeBrushCoordinates = [d3.min(self.schoolData, function (d) {return +d['CCSIZSET']}),
+                                    d3.max(self.schoolData, function (d) {return +d['CCSIZSET']})]
+    self.SAT_BrushCoordinates = [d3.min(self.schoolData, function (d) {return +d['SAT_AVG_ALL']}),
+                                    d3.max(self.schoolData, function (d) {return +d['SAT_AVG_ALL']})]
+    self.admRateBrushCoordinates = [d3.min(self.schoolData, function (d) {return +d['ADM_RATE_ALL']}),
+                                    d3.max(self.schoolData, function (d) {return +d['ADM_RATE_ALL']})]
+    self.selectedSchools = []
+    console.log(self.sizeBrushCoordinates)
     self.margin = {top: 10, right: 20, bottom: 30, left: 50};
     var divSliderLayout = d3.select("#sliderLayout").classed("content", true);
 
@@ -49,28 +56,28 @@ SliderLayout.prototype.init = function(){
 SliderLayout.prototype.update = function () { //function(selectedDimension){
     var self = this;
 
-    console.log(self.schools)
+    console.log(self.schoolData)
 
     var tuitionScale = d3.scaleLinear()
-        .domain([0, d3.max(self.schools, function (d) {
+        .domain([0, d3.max(self.schoolData, function (d) {
             return +d['COST'];
         })])
         .range([0, self.sliderWidth]);
 
     var sizeScale = d3.scaleLinear()
-        .domain([0, d3.max(self.schools, function (d) {
+        .domain([0, d3.max(self.schoolData, function (d) {
             return +d['CCSIZSET'];
         })])
         .range([0, self.sliderWidth]);
 
     var SAT_Scale = d3.scaleLinear()
-        .domain([0, d3.max(self.schools, function (d) {
+        .domain([0, d3.max(self.schoolData, function (d) {
             return +d['SAT_AVG_ALL'];
         })])
         .range([0, self.sliderWidth]);
 
     var admRateScale = d3.scaleLinear()
-        .domain([0, d3.max(self.schools, function (d) {
+        .domain([0, d3.max(self.schoolData, function (d) {
             return +d['ADM_RATE_ALL'];
         })])
         .range([0, self.sliderWidth]);
@@ -197,15 +204,16 @@ SliderLayout.prototype.tuitionBrushed = function(d) {
 
     var reverseTuitionScale = d3.scaleLinear()
     .domain([self.margin.left, self.svgWidth - self.margin.right])
-    .range([0, d3.max(self.schools, function (d) {
+    .range([0, d3.max(self.schoolData, function (d) {
             return +d['COST'];
         })])
 
-    d3.event.selection.forEach(function(coordinate) {
-        self.tuitionBrushCoordinates.push(reverseTuitionScale(coordinate));
+    d3.event.selection.forEach(function(coordinate, index) {
+        self.tuitionBrushCoordinates[index] = reverseTuitionScale(coordinate);
     });
 
     console.log(self.tuitionBrushCoordinates)
+    self.selectData()
 };
 
 SliderLayout.prototype.sizeBrushed = function(d) {
@@ -213,15 +221,16 @@ SliderLayout.prototype.sizeBrushed = function(d) {
 
     var reverseSizeScale = d3.scaleLinear()
     .domain([self.margin.left, self.svgWidth - self.margin.right])
-    .range([0, d3.max(self.schools, function (d) {
+    .range([0, d3.max(self.schoolData, function (d) {
             return +d['CCSIZSET'];
         })])
 
-    d3.event.selection.forEach(function(coordinate) {
-        self.sizeBrushCoordinates.push(reverseSizeScale(coordinate));
+    d3.event.selection.forEach(function(coordinate, index) {
+        self.sizeBrushCoordinates[index] = reverseSizeScale(coordinate);
     });
     
     console.log(self.sizeBrushCoordinates)
+    self.selectData()
 };
 
 SliderLayout.prototype.SAT_Brushed = function(d) {
@@ -229,15 +238,16 @@ SliderLayout.prototype.SAT_Brushed = function(d) {
 
     var reverseSAT_Scale = d3.scaleLinear()
     .domain([self.margin.left, self.svgWidth - self.margin.right])
-    .range([0, d3.max(self.schools, function (d) {
+    .range([0, d3.max(self.schoolData, function (d) {
             return +d['SAT_AVG_ALL'];
         })])
 
-    d3.event.selection.forEach(function(coordinate) {
-        self.SAT_BrushCoordinates.push(reverseSAT_Scale(coordinate));
+    d3.event.selection.forEach(function(coordinate, index) {
+        self.SAT_BrushCoordinates[index] = reverseSAT_Scale(coordinate);
     });
     
     console.log(self.SAT_BrushCoordinates)
+    self.selectData()
 };
 
 SliderLayout.prototype.admRateBrushed = function(d) {
@@ -245,13 +255,33 @@ SliderLayout.prototype.admRateBrushed = function(d) {
 
     var reverseAdmRateScale = d3.scaleLinear()
     .domain([self.margin.left, self.svgWidth - self.margin.right])
-    .range([0, d3.max(self.schools, function (d) {
+    .range([0, d3.max(self.schoolData, function (d) {
             return +d['ADM_RATE_ALL'];
         })])
 
-    d3.event.selection.forEach(function(coordinate) {
-        self.admRateBrushCoordinates.push(reverseAdmRateScale(coordinate));
+    d3.event.selection.forEach(function(coordinate, index) {
+        self.admRateBrushCoordinates[index] = reverseAdmRateScale(coordinate);
     });
     
     console.log(self.admRateBrushCoordinates)
+    self.selectData()
+};
+
+SliderLayout.prototype.selectData = function(d) {
+    var self = this;
+
+    self.selectedSchools = self.schoolData.filter(function (d) {
+            return (
+                d['COST'] >= self.tuitionBrushCoordinates[0] &
+                d['COST'] <= self.tuitionBrushCoordinates[1] &
+                d['CCSIZSET'] >= self.sizeBrushCoordinates[0] &
+                d['CCSIZSET'] <= self.sizeBrushCoordinates[1] &
+                d['SAT_AVG_ALL'] >= self.SAT_BrushCoordinates[0] &
+                d['SAT_AVG_ALL'] <= self.SAT_BrushCoordinates[1] &
+                d['ADM_RATE_ALL'] >= self.admRateBrushCoordinates[0] &
+                d['ADM_RATE_ALL'] <= self.admRateBrushCoordinates[1]
+            )
+        });
+
+    self.barChart.updateData(self.selectedSchools)
 };
