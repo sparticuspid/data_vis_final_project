@@ -18,6 +18,10 @@ function SliderLayout(schoolData) {
  */
 SliderLayout.prototype.init = function(){
     var self = this;
+    self.tuitionBrushCoordinates = []
+    self.sizeBrushCoordinates = []
+    self.SAT_BrushCoordinates = []
+    self.admRateBrushCoordinates = []
 
     self.margin = {top: 10, right: 20, bottom: 30, left: 50};
     var divSliderLayout = d3.select("#sliderLayout").classed("content", true);
@@ -26,7 +30,9 @@ SliderLayout.prototype.init = function(){
     self.svgBounds = divSliderLayout.node().getBoundingClientRect();
     self.svgWidth = 500 //self.svgBounds.width - self.margin.left - self.margin.right;
     self.svgHeight = 300 //self.svgBounds.height;
-    self.sliderWidth = self.svgHeight - 20
+    self.sliderWidth = self.svgWidth - self.margin.left - self.margin.right
+    self.sliderHeight = 10
+    self.sliderSpacing = 50
 
     //creates svg element within the div
     self.svg = divSliderLayout
@@ -77,9 +83,9 @@ SliderLayout.prototype.update = function () { //function(selectedDimension){
         .append('rect')
         .attr('id', 'tuitionBar')
         .attr('width', self.sliderWidth)
-        .attr('height', 10)
-        .attr('x', 10)
-        .attr('y', 0)
+        .attr('height', self.sliderHeight)
+        .attr('x', self.margin.left)
+        .attr('y', self.sliderSpacing*0)
 
     var sizeSliderGroup = self.svg
         .append('g')
@@ -89,9 +95,9 @@ SliderLayout.prototype.update = function () { //function(selectedDimension){
         .append('rect')
         .attr('id', 'sizeBar')
         .attr('width', self.sliderWidth)
-        .attr('height', 10)
-        .attr('x', 10)
-        .attr('y', 50)
+        .attr('height', self.sliderHeight)
+        .attr('x', self.margin.left)
+        .attr('y', self.sliderSpacing*1)
 
     var SAT_SliderGroup = self.svg
         .append('g')
@@ -101,9 +107,9 @@ SliderLayout.prototype.update = function () { //function(selectedDimension){
         .append('rect')
         .attr('id', 'SAT_Bar')
         .attr('width', self.sliderWidth)
-        .attr('height', 10)
-        .attr('x', 10)
-        .attr('y', 100)
+        .attr('height', self.sliderHeight)
+        .attr('x', self.margin.left)
+        .attr('y', self.sliderSpacing*2)
 
     var admRateSliderGroup = self.svg
         .append('g')
@@ -113,9 +119,9 @@ SliderLayout.prototype.update = function () { //function(selectedDimension){
         .append('rect')
         .attr('id', 'admRateBar')
         .attr('width', self.sliderWidth)
-        .attr('height', 10)
-        .attr('x', 10)
-        .attr('y', 150)
+        .attr('height', self.sliderHeight)
+        .attr('x', self.margin.left)
+        .attr('y', self.sliderSpacing*3)
 
     // create a new Slider that has the ticks and labels on the bottom
     var tuitionAxis = d3.axisBottom()
@@ -124,8 +130,7 @@ SliderLayout.prototype.update = function () { //function(selectedDimension){
 
     tuitionSliderGroup
         .append('g')
-        .attr("transform", "translate(10, 10)")
-        .attr('y', 10)
+        .attr("transform", "translate(" + self.margin.left + "," + (self.sliderHeight + self.sliderSpacing*0) + ")")
         .call(tuitionAxis)
 
     // create a new Slider that has the ticks and labels on the bottom
@@ -135,8 +140,7 @@ SliderLayout.prototype.update = function () { //function(selectedDimension){
 
     sizeSliderGroup
         .append('g')
-        .attr("transform", "translate(10, 60)")
-        .attr('y', 10)
+        .attr("transform", "translate(" + self.margin.left + "," + (self.sliderHeight + self.sliderSpacing*1) + ")")
         .call(sizeAxis)
 
     // create a new Slider that has the ticks and labels on the bottom
@@ -146,8 +150,7 @@ SliderLayout.prototype.update = function () { //function(selectedDimension){
 
     SAT_SliderGroup
         .append('g')
-        .attr("transform", "translate(10, 110)")
-        .attr('y', 10)
+        .attr("transform", "translate(" + self.margin.left + "," + (self.sliderHeight + self.sliderSpacing*2) + ")")
         .call(SAT_Axis)
 
     // create a new Slider that has the ticks and labels on the bottom
@@ -157,89 +160,98 @@ SliderLayout.prototype.update = function () { //function(selectedDimension){
 
     admRateSliderGroup
         .append('g')
-        .attr("transform", "translate(10, 160)")
-        .attr('y', 10)
+        .attr("transform", "translate(" + self.margin.left + "," + (self.sliderHeight + self.sliderSpacing*3) + ")")
         .call(admRateAxis)
 
+    var tuitionBrush = d3.brushX().extent([[self.margin.left,self.sliderSpacing*0],[self.svgWidth - self.margin.right,self.sliderHeight + 1]])
 
-    var plotSelector = d3.select("#SliderLayout").select("#plot-selector").select('#dataset')
-        .on('change', function (d) {return self.chooseMetric()})
+    tuitionSliderGroup.append("g").attr("class", "brush").call(tuitionBrush);
 
-    var SliderLayout = d3.select("#SliderLayout").select('svg').select('g')
+    tuitionBrush
+        .on("end", function(d){ self.tuitionBrushed(d)})
 
-    var bars = SliderLayout.selectAll('rect').data(self.schools)
+    var sizeBrush = d3.brushX().extent([[self.margin.left,self.sliderSpacing*1],[self.svgWidth - self.margin.right,50+self.sliderHeight + 1]])
 
-    bars
-        .enter()
-        .append('rect')
-        .merge(bars)
-        .attr('x', function (d,i) {return xScale(d.INSTNM)})
-        .attr('y', 0)
-        .attr('height', function (d) {return yScale(+d[self.selectedMetric])})
-        .attr('width', xScale.bandwidth())
-        .attr('fill', 'blue')
+    sizeSliderGroup.append("g").attr("class", "brush").call(sizeBrush);
 
-    //Append text information of each year right below the corresponding circle
-    //HINT: Use .yeartext class to style your text elements
+    sizeBrush
+        .on("end", function(d){ self.sizeBrushed(d)})
 
-    // yearChart.selectAll('text').data(self.electionWinners)
-    //     .enter()
-    //     .append('text')
-    //     .classed('yeartext', true)
-    //     .text(function (d) {return d.YEAR})
-    //     .attr('x', function (d, i) {return yearScale(i)})
-    //     .attr('y', self.yearPosition)
+    var SAT_Brush = d3.brushX().extent([[self.margin.left,self.sliderSpacing*2],[self.svgWidth - self.margin.right,100+self.sliderHeight + 1]])
 
-    // //Clicking on any specific year should highlight that circle and  update the rest of the visualizations
-    // //HINT: Use .highlighted class to style the highlighted circle
+    SAT_SliderGroup.append("g").attr("class", "brush").call(SAT_Brush);
 
-    // years
-    //     .on("click", function(d){ self.yearClickEvent(d.YEAR)})
+    SAT_Brush
+        .on("end", function(d){ self.SAT_Brushed(d)})
 
-    //Election information corresponding to that year should be loaded and passed to
-    // the update methods of other visualizations
+    var admRateBrush = d3.brushX().extent([[self.margin.left,self.sliderSpacing*3],[self.svgWidth - self.margin.right,150+self.sliderHeight + 1]])
 
+    admRateSliderGroup.append("g").attr("class", "brush").call(admRateBrush);
 
-    //******* TODO: EXTRA CREDIT *******
-
-    //Implement brush on the year chart created above.
-    //Implement a call back method to handle the brush end event.
-    //Call the update method of shiftChart and pass the data corresponding to brush selection.
-    //HINT: Use the .brush class to style the brush.
+    admRateBrush
+        .on("end", function(d){ self.admRateBrushed(d)})
 }
 
-// SliderLayout.prototype.chooseMetric = function() {
-//     var self = this
-//     self.selectedMetric = document.getElementById('dataset').value
-//     console.log(self.selectedMetric)
-//     self.update();
-// }
-// // SliderLayout.prototype.yearClickEvent = function(d) {
-// //     // body...
+SliderLayout.prototype.tuitionBrushed = function(d) {
+    var self = this;
 
-// //     var self = this;
-// //     var selectedYear = d
-// //     var states = []
+    var reverseTuitionScale = d3.scaleLinear()
+    .domain([self.margin.left, self.svgWidth - self.margin.right])
+    .range([0, d3.max(self.schools, function (d) {
+            return +d['COST'];
+        })])
 
-// //     circles = d3.select('#year-chart').select('svg').selectAll('circle')
-// //         .classed('highlighted', false);
+    d3.event.selection.forEach(function(coordinate) {
+        self.tuitionBrushCoordinates.push(reverseTuitionScale(coordinate));
+    });
 
-// //     circles
-// //         .filter(function (d) {return d.YEAR == selectedYear})
-// //         .classed('highlighted', true)
+    console.log(self.tuitionBrushCoordinates)
+};
 
-// //     d3.csv('data/Year_Timeline_' + selectedYear + '.csv', function (error, csv) {
-// //         var electionYearData = csv;
-// //         self.electoralVoteChart.update(electionYearData, self.colorScale)
-// //         self.votePercentageChart.update(electionYearData)
-// //         self.tileChart.update(electionYearData, self.colorScale)
-// //         self.shiftChart.update(states)
+SliderLayout.prototype.sizeBrushed = function(d) {
+    var self = this;
 
-// //     })
-// // };
+    var reverseSizeScale = d3.scaleLinear()
+    .domain([self.margin.left, self.svgWidth - self.margin.right])
+    .range([0, d3.max(self.schools, function (d) {
+            return +d['CCSIZSET'];
+        })])
 
-// SliderLayout.prototype.updateData = function (schools) {
-//     var self = this
-//     self.schools = schools
-//     self.update()
-// }
+    d3.event.selection.forEach(function(coordinate) {
+        self.sizeBrushCoordinates.push(reverseSizeScale(coordinate));
+    });
+    
+    console.log(self.sizeBrushCoordinates)
+};
+
+SliderLayout.prototype.SAT_Brushed = function(d) {
+    var self = this;
+
+    var reverseSAT_Scale = d3.scaleLinear()
+    .domain([self.margin.left, self.svgWidth - self.margin.right])
+    .range([0, d3.max(self.schools, function (d) {
+            return +d['SAT_AVG_ALL'];
+        })])
+
+    d3.event.selection.forEach(function(coordinate) {
+        self.SAT_BrushCoordinates.push(reverseSAT_Scale(coordinate));
+    });
+    
+    console.log(self.SAT_BrushCoordinates)
+};
+
+SliderLayout.prototype.admRateBrushed = function(d) {
+    var self = this;
+
+    var reverseAdmRateScale = d3.scaleLinear()
+    .domain([self.margin.left, self.svgWidth - self.margin.right])
+    .range([0, d3.max(self.schools, function (d) {
+            return +d['ADM_RATE_ALL'];
+        })])
+
+    d3.event.selection.forEach(function(coordinate) {
+        self.admRateBrushCoordinates.push(reverseAdmRateScale(coordinate));
+    });
+    
+    console.log(self.admRateBrushCoordinates)
+};

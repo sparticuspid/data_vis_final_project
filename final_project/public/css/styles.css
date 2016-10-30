@@ -197,7 +197,11 @@ header {
     margin-right: 20px;
 
 }
-*/
+
+.brush .selection {
+    fill-opacity: 1;   
+    fill: red;
+}
 /* Styles that clean up the layout;
  * you can ignore these: */
 
