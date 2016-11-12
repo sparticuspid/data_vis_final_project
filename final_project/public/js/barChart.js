@@ -11,18 +11,20 @@ function BarChart() {
  */
 BarChart.prototype.init = function(){
     var self = this;
-    var divBarChart = d3.select("#barChart").classed("content", true);
+    var divBarChart = d3.select("#barChart").classed("view", true);
 
     // //Gets access to the div element created for this chart from HTML
-    self.margin = {top: 10, right: 20, bottom: 30, left: 50};
+    self.margin =    {top: 10, right: 20, bottom: 30, left: 50};
     self.svgBounds = divBarChart.node().getBoundingClientRect();
     self.svgWidth = 500 //self.svgBounds.width - self.margin.left - self.margin.right;
     self.svgHeight = 300 //self.svgBounds.height;
+
 
     //creates svg element within the div
     self.svg = divBarChart.append("svg")
         .attr("width",self.svgWidth)
         .attr("height",self.svgHeight)
+        .attr('y', 50)
 
     self.svg
         .append('g')
@@ -32,6 +34,7 @@ BarChart.prototype.init = function(){
 
     self.schoolData = []
     self.selectedMetric = 'COST'
+    self.selectedSchool = 'University of Utah'
 };
 
 /**
@@ -64,7 +67,7 @@ BarChart.prototype.update = function () {
         .exit()
         .remove()
 
-    bars
+    bars = bars
         .enter()
         .append('rect')
         .merge(bars)
@@ -73,6 +76,12 @@ BarChart.prototype.update = function () {
         .attr('height', function (d) {return yScale(+d[self.selectedMetric])})
         .attr('width', xScale.bandwidth())
         .attr('fill', 'blue')
+        .classed('selected', false)
+
+    bars
+        .filter(function (d) {console.log('selected school: ' + d.INSTNM + self.selectedSchool); return d.INSTNM == self.selectedSchool })
+        .classed('selected', true)
+
 
 }
 
@@ -83,8 +92,9 @@ BarChart.prototype.chooseMetric = function() {
     self.update();
 }
 
-BarChart.prototype.updateData = function (schools) {
+BarChart.prototype.updateData = function (schools, selectedSchool) {
     var self = this
     self.schoolData = schools
+    self.selectedSchool = selectedSchool
     self.update()
 }

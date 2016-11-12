@@ -16,8 +16,8 @@ u0075213*/
     height: 500 px;
 }
 
-#map {
-    width: 800 px;
+#map, #sliderLayout {
+    width: 500 px;
     float: left;
 }
 
@@ -161,7 +161,7 @@ header {
 
 }
 
-#bar-chart {
+#barChart {
     float: left;
     width: 500px;
     margin-right: 20px;
@@ -175,6 +175,10 @@ header {
     border-left-style: solid;
 }
 
+#map-layout {
+    width: 500px;
+    height: 300px;
+}
 
 #links > line {
     stroke: rgb(216, 216, 216);

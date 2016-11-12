@@ -30,8 +30,8 @@ SliderLayout.prototype.init = function(){
                                     d3.max(self.schoolData, function (d) {return +d['ADM_RATE_ALL']})]
     self.selectedSchools = []
     console.log(self.sizeBrushCoordinates)
-    self.margin = {top: 10, right: 20, bottom: 30, left: 50};
-    var divSliderLayout = d3.select("#sliderLayout").classed("content", true);
+    self.margin = {top: 10, right: 20, bottom: 30, left: 20};
+    var divSliderLayout = d3.select("#sliderLayout").classed("view", true);
 
     // //Gets access to the div element created for this chart from HTML
     self.svgBounds = divSliderLayout.node().getBoundingClientRect();
@@ -39,7 +39,9 @@ SliderLayout.prototype.init = function(){
     self.svgHeight = 300 //self.svgBounds.height;
     self.sliderWidth = self.svgWidth - self.margin.left - self.margin.right
     self.sliderHeight = 10
-    self.sliderSpacing = 50
+    self.sliderSpacing = 75
+    self.firstSliderPosition = 40
+    self.firstTextPosition = 30
 
     //creates svg element within the div
     self.svg = divSliderLayout
@@ -86,13 +88,37 @@ SliderLayout.prototype.update = function () { //function(selectedDimension){
         .append('g')
         .attr('id', 'tuitionSlider')
 
+    self.svg
+        .append('text')
+        .text('What tuition range are you interested in?')
+        .attr('y', self.firstTextPosition + self.sliderSpacing*0)
+        .attr('x', self.margin.left)
+
+    self.svg
+        .append('text')
+        .text('What school size range are you interested in?')
+        .attr('y', self.firstTextPosition + self.sliderSpacing*1)
+        .attr('x', self.margin.left)
+
+    self.svg
+        .append('text')
+        .text('What SAT range are you interested in?')
+        .attr('y', self.firstTextPosition + self.sliderSpacing*2)
+        .attr('x', self.margin.left)
+
+    self.svg
+        .append('text')
+        .text('What admission rate range are you interested in?')
+        .attr('y', self.firstTextPosition + self.sliderSpacing*3)
+        .attr('x', self.margin.left)
+
     tuitionSliderGroup
         .append('rect')
         .attr('id', 'tuitionBar')
         .attr('width', self.sliderWidth)
         .attr('height', self.sliderHeight)
         .attr('x', self.margin.left)
-        .attr('y', self.sliderSpacing*0)
+        .attr('y', self.firstSliderPosition + self.sliderSpacing*0)
 
     var sizeSliderGroup = self.svg
         .append('g')
@@ -104,7 +130,7 @@ SliderLayout.prototype.update = function () { //function(selectedDimension){
         .attr('width', self.sliderWidth)
         .attr('height', self.sliderHeight)
         .attr('x', self.margin.left)
-        .attr('y', self.sliderSpacing*1)
+        .attr('y', self.firstSliderPosition + self.sliderSpacing*1)
 
     var SAT_SliderGroup = self.svg
         .append('g')
@@ -116,7 +142,7 @@ SliderLayout.prototype.update = function () { //function(selectedDimension){
         .attr('width', self.sliderWidth)
         .attr('height', self.sliderHeight)
         .attr('x', self.margin.left)
-        .attr('y', self.sliderSpacing*2)
+        .attr('y', self.firstSliderPosition + self.sliderSpacing*2)
 
     var admRateSliderGroup = self.svg
         .append('g')
@@ -128,7 +154,7 @@ SliderLayout.prototype.update = function () { //function(selectedDimension){
         .attr('width', self.sliderWidth)
         .attr('height', self.sliderHeight)
         .attr('x', self.margin.left)
-        .attr('y', self.sliderSpacing*3)
+        .attr('y', self.firstSliderPosition + self.sliderSpacing*3)
 
     // create a new Slider that has the ticks and labels on the bottom
     var tuitionAxis = d3.axisBottom()
@@ -137,7 +163,7 @@ SliderLayout.prototype.update = function () { //function(selectedDimension){
 
     tuitionSliderGroup
         .append('g')
-        .attr("transform", "translate(" + self.margin.left + "," + (self.sliderHeight + self.sliderSpacing*0) + ")")
+        .attr("transform", "translate(" + self.margin.left + "," + (self.firstSliderPosition + self.sliderHeight + self.sliderSpacing*0) + ")")
         .call(tuitionAxis)
 
     // create a new Slider that has the ticks and labels on the bottom
@@ -147,7 +173,7 @@ SliderLayout.prototype.update = function () { //function(selectedDimension){
 
     sizeSliderGroup
         .append('g')
-        .attr("transform", "translate(" + self.margin.left + "," + (self.sliderHeight + self.sliderSpacing*1) + ")")
+        .attr("transform", "translate(" + self.margin.left + "," + (self.firstSliderPosition + self.sliderHeight + self.sliderSpacing*1) + ")")
         .call(sizeAxis)
 
     // create a new Slider that has the ticks and labels on the bottom
@@ -157,7 +183,7 @@ SliderLayout.prototype.update = function () { //function(selectedDimension){
 
     SAT_SliderGroup
         .append('g')
-        .attr("transform", "translate(" + self.margin.left + "," + (self.sliderHeight + self.sliderSpacing*2) + ")")
+        .attr("transform", "translate(" + self.margin.left + "," + (self.firstSliderPosition + self.sliderHeight + self.sliderSpacing*2) + ")")
         .call(SAT_Axis)
 
     // create a new Slider that has the ticks and labels on the bottom
@@ -167,31 +193,31 @@ SliderLayout.prototype.update = function () { //function(selectedDimension){
 
     admRateSliderGroup
         .append('g')
-        .attr("transform", "translate(" + self.margin.left + "," + (self.sliderHeight + self.sliderSpacing*3) + ")")
+        .attr("transform", "translate(" + self.margin.left + "," + (self.firstSliderPosition + self.sliderHeight + self.sliderSpacing*3) + ")")
         .call(admRateAxis)
 
-    var tuitionBrush = d3.brushX().extent([[self.margin.left,self.sliderSpacing*0],[self.svgWidth - self.margin.right,self.sliderHeight + 1]])
+    var tuitionBrush = d3.brushX().extent([[self.margin.left,self.firstSliderPosition + self.sliderSpacing*0],[self.svgWidth - self.margin.right,self.firstSliderPosition + self.sliderSpacing*0 + self.sliderHeight + 1]])
 
     tuitionSliderGroup.append("g").attr("class", "brush").call(tuitionBrush);
 
     tuitionBrush
         .on("end", function(d){ self.tuitionBrushed(d)})
 
-    var sizeBrush = d3.brushX().extent([[self.margin.left,self.sliderSpacing*1],[self.svgWidth - self.margin.right,50+self.sliderHeight + 1]])
+    var sizeBrush = d3.brushX().extent([[self.margin.left,self.firstSliderPosition + self.sliderSpacing*1],[self.svgWidth - self.margin.right,self.firstSliderPosition + self.sliderSpacing*1 + self.sliderHeight + 1]])
 
     sizeSliderGroup.append("g").attr("class", "brush").call(sizeBrush);
 
     sizeBrush
         .on("end", function(d){ self.sizeBrushed(d)})
 
-    var SAT_Brush = d3.brushX().extent([[self.margin.left,self.sliderSpacing*2],[self.svgWidth - self.margin.right,100+self.sliderHeight + 1]])
+    var SAT_Brush = d3.brushX().extent([[self.margin.left,self.firstSliderPosition + self.sliderSpacing*2],[self.svgWidth - self.margin.right,self.firstSliderPosition + self.sliderSpacing*2 + self.sliderHeight + 1]])
 
     SAT_SliderGroup.append("g").attr("class", "brush").call(SAT_Brush);
 
     SAT_Brush
         .on("end", function(d){ self.SAT_Brushed(d)})
 
-    var admRateBrush = d3.brushX().extent([[self.margin.left,self.sliderSpacing*3],[self.svgWidth - self.margin.right,150+self.sliderHeight + 1]])
+    var admRateBrush = d3.brushX().extent([[self.margin.left,self.firstSliderPosition + self.sliderSpacing*3],[self.svgWidth - self.margin.right,self.firstSliderPosition + self.sliderSpacing*3 +self.sliderHeight + 1]])
 
     admRateSliderGroup.append("g").attr("class", "brush").call(admRateBrush);
 
