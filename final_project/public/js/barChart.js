@@ -18,7 +18,8 @@ BarChart.prototype.init = function(){
     self.svgBounds = divBarChart.node().getBoundingClientRect();
     self.svgWidth = 500 //self.svgBounds.width - self.margin.left - self.margin.right;
     self.svgHeight = 300 //self.svgBounds.height;
-
+    self.padding = 25;
+    self.textWidth = 50;
 
     //creates svg element within the div
     self.svg = divBarChart.append("svg")
@@ -28,9 +29,17 @@ BarChart.prototype.init = function(){
 
     self.svg
         .append('g')
+        .attr('id','bars')
         .attr("width",self.svgWidth)
         .attr("height",self.svgHeight)
-        .attr("transform", "translate(0," +  self.svgHeight + ") scale(1, -1)")
+        .attr("transform", "translate(" + (self.textWidth + self.padding) + "," +  (self.svgHeight - self.padding) + ") scale(1, -1)")
+
+    self.svg
+        .append('g')
+        .attr('id','yAxis')
+        .attr("width",self.svgWidth)
+        .attr("height",self.svgHeight)
+        .attr("transform", "translate(" + (self.textWidth + self.padding) + "," +  self.padding + ")")
 
     self.schoolData = []
     self.selectedMetric = 'COST'
@@ -48,20 +57,26 @@ BarChart.prototype.update = function () {
         .domain([0, d3.max(self.schoolData, function (d) {
             return +d[self.selectedMetric];
         })])
-        .range([0, self.svgHeight]);
+        .range([self.svgHeight - self.padding*2,0]);
 
     var xScale = d3.scaleBand()
         .domain(self.schoolData.map(function (d) {
             return d.INSTNM; 
     }))
-        .range([self.svgWidth, 0]).padding(.1)
+        .range([self.svgWidth - self.textWidth - self.padding, 0]).padding(.1)
 
     var plotSelector = d3.select("#barChart").select("#plot-selector").select('#dataset')
         .on('change', function (d) {return self.chooseMetric()})
 
-    var barChart = d3.select("#barChart").select('svg').select('g')
+    var yAxisGroup = d3.select('#yAxis')
 
-    var bars = barChart.selectAll('rect').data(self.schoolData)
+    var yAxis = d3.axisLeft();
+
+    // assign the scale to the axis
+    yAxis.scale(yScale);
+    yAxisGroup.call(yAxis);
+
+    var bars = d3.select('#bars').selectAll('rect').data(self.schoolData)
 
     bars
         .exit()
@@ -72,8 +87,7 @@ BarChart.prototype.update = function () {
         .append('rect')
         .merge(bars)
         .attr('x', function (d,i) {return xScale(d.INSTNM)})
-        .attr('y', 0)
-        .attr('height', function (d) {return yScale(+d[self.selectedMetric])})
+        .attr('height', function (d) {return yScale(0) - yScale(+d[self.selectedMetric])})
         .attr('width', xScale.bandwidth())
         .attr('fill', 'blue')
         .classed('selected', false)
