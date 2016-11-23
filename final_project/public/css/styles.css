@@ -4,6 +4,21 @@ Assignment #3
 Dylan Zwick
 u0075213*/
 
+/*#filterDiv {
+    width: 100px;
+    height: 10px;
+    background-color:red;
+}*/
+
+/*#filterDiv {
+    position: fixed;
+    z-index: 5;
+    top: 800px;
+    left: 600px;
+    background-color: red;
+    border-radius: 25px;
+}*/
+
 #school-search {
     width: 500px;
 }
@@ -16,7 +31,7 @@ u0075213*/
     height: 500 px;
 }
 
-#map, #sliderLayout {
+#map {
     width: 500 px;
     float: left;
 }

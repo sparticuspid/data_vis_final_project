@@ -61,6 +61,43 @@ FilterPanel.prototype.init = function(){
         .attr('width', self.svgWidth)
         .attr('height', self.svgHeight)
 
+    self.filterOptionsData = [
+        {'filter':'Tuition'}
+        ,{'filter':'Admission Rate'}
+        ,{'filter':'School Size'}
+        ,{'filter':'Avg SAT Score'}
+        ,{'filter':'State'}
+    ]
+    console.log(self.filterOptionsData)
+    self.filterSelections = self.svg
+        .append('g')
+
+    self.filterSelections
+        .append('rect')
+        .attr('height',self.svgHeight/2)
+        .attr('width', self.svgWidth/5)
+        .attr('fill', 'black')
+        .attr('rx',"15")
+        .attr('ry',"15")
+        .attr('x', self.svgWidth*(4/5) - self.margin.right)
+        .attr('y', self.svgHeight/5)
+
+    filterSelections = self.filterSelections.selectAll('.option').data(self.filterOptionsData)
+        .enter()
+        .append('rect')
+        .attr('id', 'option')
+        .attr('height',30)
+        .attr('width', 100)
+        .attr('fill', 'white')
+        .attr('rx',"15")
+        .attr('ry',"15")
+        .attr('x', self.svgWidth*(4/5) - self.margin.right)
+        .attr('y', function (d,i) {return self.svgHeight/5 + (i+1)*40})
+    
+    filterSelections
+        .append('txt')    
+        .text(function (d) {return d.filter})
+
     self.svg
         .append('rect')
         .attr('height',30)

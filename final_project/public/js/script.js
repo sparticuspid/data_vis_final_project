@@ -17,7 +17,7 @@ function Script (barChart, schoolData) {
 
 Script.prototype.init = function(){
     var self = this;
-    console.log('5')
+    // console.log('5')
     self.update()
     self.mapWidth = 500
     self.mapHeight = 300
@@ -26,7 +26,7 @@ Script.prototype.init = function(){
 Script.prototype.update = function() {
     var self = this;
 
-    console.log('6')
+    // console.log('6')
     schoolNames = self.schoolData.map(function(d,i){return d.INSTNM});
     $( function() {
     $("#schoolchoice").autocomplete({
@@ -60,7 +60,7 @@ var schooMatrix
 //     });
 // });
 
-d3.csv("data/similarity_rankings.csv", function (data) {
+d3.csv("data/similarity_rankings_top30.csv", function (data) {
     schoolMatrix = data;
 });
 
@@ -68,6 +68,19 @@ d3.json("data/us-states.json", function (error, nation) {
     if (error) throw error;
     self.drawMap(nation);
 });
+
+    d3.select('#filterButton')
+        .append('svg')
+        .append('rect')
+        .attr('height',30)
+        .attr('width',100)
+        .attr('background-color', 'red')
+        .attr('rx',"15")
+        .attr('ry',"15")
+        .attr('x', 0)
+        .attr('y', 0)
+        .style('cursor', 'pointer')
+        .on('click', function (d) {self.clickFilter()})
 
 }
 
@@ -79,8 +92,9 @@ Script.prototype.updateMainInfo = function (selectedSchool) {
     var similarSchools = schoolMatrix.filter(function(d){
 	return d.UNITID == selectedSchoolData.UNITID})[0];
     var similarSchoolIDs = $.map(similarSchools, function(d,i){return[d]});
+    console.log(similarSchoolIDs)
     var similarSchoolsArray = [];
-    console.log('sim: ' + similarSchools)
+    // console.log('sim: ' + similarSchools)
     for(var i = 0; i < similarSchoolIDs.length; i++)
     {
 	similarSchoolsArray.push(
@@ -252,3 +266,27 @@ Script.prototype.drawMap = function (nation) {
         .append("path")
         .attr("d", path);
 }    
+
+Script.prototype.clickFilter = function () {
+    var self = this
+    console.log('here')
+    d3.csv("data/similarity_rankings_top30.csv", function (similarityData) {
+        data = {}
+
+        console.log('this is similarityData: ')
+        console.log(similarityData)
+        for (var row in similarityData) {
+            var similarSchools = {}
+            for (var i = 1; i <= 30; i++) {
+                similarSchools[similarityData[row]['Similar School ' + i]] = similarityData[row]['Similar School ' + i]
+            }
+            data[similarityData[row]['UNITID']] = similarSchools;
+        }
+
+        //console.log(data)
+        console.log('new data:' + data)
+        var filterPanel = new FilterPanel(self.barChart, self.schoolData, data);
+        filterPanel.update()
+    });
+
+}
