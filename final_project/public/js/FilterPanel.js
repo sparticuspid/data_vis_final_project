@@ -30,7 +30,7 @@ FilterPanel.prototype.init = function(){
     self.admRateBrushCoordinates = [d3.min(self.schoolData, function (d) {return +d['ADM_RATE_ALL']}),
                                     d3.max(self.schoolData, function (d) {return +d['ADM_RATE_ALL']})]
     self.selectedSchools = []
-    // console.log(self.sizeBrushCoordinates)
+
     self.margin = {top: 10, right: 20, bottom: 20, left: 20};
 
     self.filterDiv = d3.select('body').append('div')
@@ -54,6 +54,18 @@ FilterPanel.prototype.init = function(){
     self.firstTextPosition = 30
     self.mapWidth = 300
     self.mapHeight = 200
+    self.optionsPanel_posX = self.svgWidth*(4/5) - self.margin.right
+    self.optionsPanel_posY = self.svgHeight/5
+    self.optionsPanelWidth = self.svgWidth/5
+    self.optionsPanelHeight = self.svgHeight/2
+    self.optionsWidth = self.svgWidth/6
+    self.optionsHeight = 30
+    self.options_posX = self.optionsPanel_posX + (self.optionsPanelWidth - self.optionsWidth)/2
+    self.options_posY_start = self.optionsPanel_posY + 40
+    self.optionsText_posX = self.options_posX + self.optionsWidth/2
+    self.optionsText_posY_start = self.options_posY_start
+    self.buttonHeight = 30
+    self.buttonWidth = self.svgWidth/7
 
     //creates svg element within the div
     self.svg = self.filterDiv
@@ -68,90 +80,181 @@ FilterPanel.prototype.init = function(){
         ,{'filter':'Avg SAT Score'}
         ,{'filter':'State'}
     ]
-    console.log(self.filterOptionsData)
-    self.filterSelections = self.svg
-        .append('g')
 
-    self.filterSelections
+    self.filterOptionsPanel = self.svg
+
+    self.filterOptionsPanel
         .append('rect')
-        .attr('height',self.svgHeight/2)
-        .attr('width', self.svgWidth/5)
+        .attr('height',self.optionsPanelHeight)
+        .attr('width', self.optionsPanelWidth)
         .attr('fill', 'black')
         .attr('rx',"15")
         .attr('ry',"15")
-        .attr('x', self.svgWidth*(4/5) - self.margin.right)
-        .attr('y', self.svgHeight/5)
+        .attr('x', self.optionsPanel_posX)
+        .attr('y', self.optionsPanel_posY)
 
-    filterSelections = self.filterSelections.selectAll('.option').data(self.filterOptionsData)
+    self.filterSelections = self.filterOptionsPanel.selectAll('.options').data(self.filterOptionsData)
         .enter()
         .append('rect')
-        .attr('id', 'option')
-        .attr('height',30)
-        .attr('width', 100)
-        .attr('fill', 'white')
-        .attr('rx',"15")
-        .attr('ry',"15")
-        .attr('x', self.svgWidth*(4/5) - self.margin.right)
-        .attr('y', function (d,i) {return self.svgHeight/5 + (i+1)*40})
-    
-    filterSelections
-        .append('txt')    
+        .attr('id',function(d){return d.filter})
+        .classed('options', true)
+        .attr('height',self.optionsHeight)
+        .attr('width', self.optionsWidth)
+        .attr('rx',"10")
+        .attr('ry',"10")
+        .attr('x', self.options_posX)
+        .attr('y', function (d,i) {return self.options_posY_start + i*40})
+        .style('cursor', 'pointer')
+        .on('mouseover', function (d) {
+            var innerSelf = this
+            d3.select(innerSelf)
+                .classed('filterHovered', true)
+                .classed('filterNotHovered', false)
+            d3.selectAll('.textOptions')
+                .filter(function (d) {
+                    return this.id == innerSelf.id
+                })
+                .classed('textFilterHovered', true)
+                .classed('textFilterNotHovered', false)
+        })
+        .on('mouseout', function (d) {
+            var innerSelf = this
+            d3.select(innerSelf)
+                .classed('filterHovered', false)
+                .classed('filterNotHovered', true)
+            d3.selectAll('.textOptions')
+                .filter(function (d) {
+                    return this.id == innerSelf.id
+                })
+                .classed('textFilterHovered', false)
+                .classed('textFilterNotHovered', true)
+        })
+        .on('click', function (d) {
+            var innerSelf = this
+            d3.selectAll('.textOptions')
+                .classed('textFilterClicked', false)
+                .classed('textFilterNotClicked', true)
+                .filter(function (d) {
+                    return this.id == innerSelf.id
+                })
+                .classed('textFilterClicked', true)
+                .classed('textFilterNotClicked', false)
+            d3.selectAll('.options')
+                .classed('filterClicked', false)
+                .classed('filterNotClicked', true)
+            d3.select(innerSelf)
+                .classed('filterNotClicked', false)
+                .classed('filterClicked', true)
+
+        })
+
+    self.textFilterSelections = self.filterOptionsPanel.selectAll('.textOptions').data(self.filterOptionsData)
+        .enter()    
+        .append('text')
+        .attr('id',function(d){return d.filter})
+        .attr('width', 100) 
+        .attr('fill',"white")   
+        .classed('textOptions',true)
+        //.style("text-anchor", "middle")
         .text(function (d) {return d.filter})
+        .attr('width',self.optionsWidth)
+        .attr('x', self.optionsText_posX)
+        .attr('y', function (d,i) {return self.optionsText_posY_start + self.optionsHeight/2 + i*40})
+        .style('text-anchor', 'middle')
+        .attr("dominant-baseline", "central")       
+        .style('cursor', 'pointer')
+        .on('mouseover', function (d) {
+            var innerSelf = this
+            d3.select(innerSelf)
+                .classed('textFilterHovered', true)
+                .classed('textFilterNotHovered', false)
+            d3.selectAll('.options')
+                .filter(function (d) {return this.id == innerSelf.id})
+                .classed('filterHovered', true)
+                .classed('filterNotHovered', false)
+        })
+        .on('mouseout', function (d) {
+            var innerSelf = this
+            d3.select(innerSelf)
+                .classed('textFilterHovered', false)
+                .classed('textFilterNotHovered', true)
+            d3.selectAll('.options')
+                .filter(function (d) {
+                    return this.id == innerSelf.id
+                })
+                .classed('filterHovered', false)
+                .classed('filterNotHovered', true)
+        })
+        .on('click', function (d) {
+            var innerSelf = this
+            d3.selectAll('.options')
+                .classed('filterClicked', false)
+                .classed('filterNotClicked', true)
+                .filter(function (d) {
+                    return this.id == innerSelf.id
+                })
+                .classed('filterClicked', true)
+                .classed('filterNotClicked', false)
+            d3.selectAll('.textOptions')
+                .classed('textFilterNotClicked', true)
+                .classed('textFilterClicked', false)
+            d3.select(innerSelf)
+                .classed('textFilterNotClicked', false)
+                .classed('textFilterClicked', true)
+        })
 
     self.svg
         .append('rect')
-        .attr('height',30)
-        .attr('width',100)
+        .attr('height',self.buttonHeight)
+        .attr('width',self.buttonWidth)
         .attr('fill', 'blue')
         .attr('rx',"15")
         .attr('ry',"15")
+        .attr('x', self.svgWidth - self.margin.right - self.buttonWidth)
+        .attr('y', self.svgHeight - self.margin.bottom - self.buttonHeight)
         .style('cursor', 'pointer')
-        .attr('x', self.svgWidth - self.margin.right - 100)
-        .attr('y', self.svgHeight - self.margin.bottom - 30)
+        .attr('stroke', 'black')
         .on('click', function (d) {self.applyFilters()})
 
 
     self.svg
         .append('rect')
-        .attr('height',30)
-        .attr('width',100)
+        .attr('height',self.buttonHeight)
+        .attr('width',self.buttonWidth)
         .attr('fill', 'red')
         .attr('rx',"15")
         .attr('ry',"15")
-        .attr('x', self.svgWidth - self.margin.right*2 - 100*2)
-        .attr('y', self.svgHeight - self.margin.bottom - 30)
+        .attr('x', self.svgWidth - self.margin.right*2 - self.buttonWidth*2)
+        .attr('y', self.svgHeight - self.margin.bottom - self.buttonHeight)
         .style('cursor', 'pointer')
+        .attr('stroke', 'black')
         .on('click', function (d) {
             d3.select('#filterDiv').remove()
             delete self
         })
         
 
-    self.svg
-        .append('text')
-        .text('Cancel')
-        .style('position','fixed')
-        .style('display', 'inline-block')
-        .style('vertical-align','middle')
-        .style('cursor', 'pointer')
-        .on('click', function (d) {d3.select('#filterDiv').remove()})
-
     self.applyText  = self.svg
         .append('text')
-        .attr('width', 100)
-        .attr('x', self.svgWidth - self.margin.right - 100)
-        .attr('y', self.svgHeight - self.margin.bottom - 50)
-        .style('cursor', 'pointer')
         .text('Apply')
+        .attr('width', 100)
+        .attr('x', self.svgWidth - self.margin.right - self.buttonWidth/2)
+        .attr('y', self.svgHeight - self.margin.bottom - self.buttonHeight/2)
+        .attr('fill','white')
         .style('text-anchor', 'middle')
+        .attr("dominant-baseline", "central")
+        .style('cursor', 'pointer') 
         .on('click', function (d) {self.applyFilters()})
         
 
     self.cancelText = self.svg
         .append('text')
         .text('Cancel')
-        .attr('x', self.svgWidth - self.margin.right*2 - 100*2)
-        .attr('y', self.svgHeight - self.margin.bottom - 30)
+        .attr('x', self.svgWidth - self.margin.right*2 - self.buttonWidth*1.5)
+        .attr('y', self.svgHeight - self.margin.bottom - self.buttonHeight/2)
+        .attr('fill','white')
+        .style('text-anchor', 'middle')
+        .attr("dominant-baseline", "central") 
         .style('cursor', 'pointer')
         .on('click', function (d) {
             d3.select('#filterDiv').remove()
@@ -166,8 +269,6 @@ FilterPanel.prototype.init = function(){
 
 FilterPanel.prototype.update = function () { //function(selectedDimension){
     var self = this;
-
-    // console.log(self.schoolData)
 
     d3.json("data/us-states.json", function (error, nation) {
         if (error) throw error;
@@ -355,8 +456,6 @@ FilterPanel.prototype.tuitionBrushed = function(d) {
     d3.event.selection.forEach(function(coordinate, index) {
         self.tuitionBrushCoordinates[index] = reverseTuitionScale(coordinate);
     });
-
-    // console.log(self.tuitionBrushCoordinates)
 };
 
 FilterPanel.prototype.sizeBrushed = function(d) {
@@ -371,8 +470,6 @@ FilterPanel.prototype.sizeBrushed = function(d) {
     d3.event.selection.forEach(function(coordinate, index) {
         self.sizeBrushCoordinates[index] = reverseSizeScale(coordinate);
     });
-    
-    // console.log(self.sizeBrushCoordinates)
 };
 
 FilterPanel.prototype.SAT_Brushed = function(d) {
@@ -403,7 +500,6 @@ FilterPanel.prototype.admRateBrushed = function(d) {
         self.admRateBrushCoordinates[index] = reverseAdmRateScale(coordinate);
     });
     
-    // console.log(self.admRateBrushCoordinates)
 };
 
 FilterPanel.prototype.selectData = function(d) {
@@ -426,7 +522,6 @@ FilterPanel.prototype.selectData = function(d) {
 
     var schools = {}
 
-    //console.log(self.selectedSchools)
     for (index in self.selectedSchools) {
         var schoolData = self.selectedSchools[index];
         var similarSchools = {};
@@ -453,24 +548,6 @@ FilterPanel.prototype.selectData = function(d) {
     }
 
     self.selectedSchools = Object.values(schools);
-    console.log(self.selectedSchools)
-    // var result = self.similarityData.filter(function(n) {
-    //       return arr2.indexOf(n) > -1;
-    //     });
-    
-    //console.log(self.similarityData)
-    // for (school in self.similarityData) {
-    //     simSchools = []
-    //     for (simSchool=0; simSchool<10; simSchool++) {
-    //             simSchools.push(self.similarityData[school]['Similar School ' + simSchool])
-    //             result = schools.filter(function(n) {
-    //               return simSchools.indexOf(n) > -1;
-    //             });
-    //     }
-    // }
-
-
-    // //console.log(result)
     
     
 };

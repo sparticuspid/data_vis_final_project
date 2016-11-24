@@ -19,6 +19,38 @@ u0075213*/
     border-radius: 25px;
 }*/
 
+.filterNotClicked {
+    fill: black;
+}
+
+.textFilterNotClicked {
+    fill: white;
+}
+
+.filterNotHovered {
+    fill: black;
+}
+
+.textFilterNotHovered {
+    fill: white;
+}
+
+.filterHovered {
+    fill: white;
+}
+
+.textFilterHovered {
+    fill: black;
+}
+
+.filterClicked {
+    fill: red;
+}
+
+.textFilterClicked {
+    fill: white;
+}
+
 #school-search {
     width: 500px;
 }
