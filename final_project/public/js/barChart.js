@@ -93,7 +93,7 @@ BarChart.prototype.update = function () {
         .classed('selected', false)
 
     bars
-        .filter(function (d) {console.log('selected school: ' + d.INSTNM + self.selectedSchool); return d.INSTNM == self.selectedSchool })
+        .filter(function (d) {return d.INSTNM == self.selectedSchool })
         .classed('selected', true)
 
 
@@ -102,7 +102,6 @@ BarChart.prototype.update = function () {
 BarChart.prototype.chooseMetric = function() {
     var self = this
     self.selectedMetric = document.getElementById('dataset').value
-    console.log(self.selectedMetric)
     self.update();
 }
 

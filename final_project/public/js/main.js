@@ -24,10 +24,13 @@
         //load the data corresponding to all the election years
         //pass this data and instances of all the charts that update on year selection to yearChart's constructor
         d3.csv("data/School_Data.csv", function (schoolData) {
-            //pass the instances of all the charts that update on selection change in YearChart
-            var script = new Script(barChart, schoolData);
-
+            d3.json("data/us-states.json", function (error, nation) {
+                if (error) throw error;
+                var script = new Script(barChart, schoolData, nation);
+            });
         });
+
+
 
     //     d3.csv('data/Year_Timeline_2012.csv', function (error, csv) {
     //     var electionYearData = csv;

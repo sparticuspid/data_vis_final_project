@@ -7,11 +7,12 @@
  * @param electionInfo instance of ElectionInfo
  * @param electionWinners data corresponding to the winning parties over mutiple election years
  */
-function FilterPanel(barChart, schoolData, similarityData) {
+function FilterPanel(barChart, schoolData, nation, similarityData) {
     var self = this;
 
     self.barChart = barChart
     self.schoolData = schoolData
+    self.nation = nation
     self.similarityData = similarityData
     self.init();
 };
@@ -31,26 +32,12 @@ FilterPanel.prototype.init = function(){
                                     d3.max(self.schoolData, function (d) {return +d['ADM_RATE_ALL']})]
     self.selectedSchools = []
 
-    self.margin = {top: 10, right: 20, bottom: 20, left: 20};
-
-    self.filterDiv = d3.select('body').append('div')
-        .attr('id', 'filterDiv')
-        .style('position', 'fixed')
-        .style('background-color', 'gray')
-        .style('border-radius', '25px')
-        .style('left','200px')
-        .style('top', '100px')
-        .style('z-index',10)
-        .style('opacity', 1)
+    self.margin = {top: 30, right: 30, bottom: 30, left: 30};
 
 
     // //Gets access to the div element created for this chart from HTML
     self.svgWidth = window.innerWidth - 400;
     self.svgHeight = window.innerHeight - 200;
-    self.sliderWidth = self.svgWidth/2;
-    self.sliderHeight = 10
-    self.sliderSpacing = 75
-    self.firstSliderPosition = 40
     self.firstTextPosition = 30
     self.mapWidth = 300
     self.mapHeight = 200
@@ -66,18 +53,53 @@ FilterPanel.prototype.init = function(){
     self.optionsText_posY_start = self.options_posY_start
     self.buttonHeight = 30
     self.buttonWidth = self.svgWidth/7
+    self.ApplyButton_posX = self.svgWidth - self.margin.right - self.buttonWidth
+    self.ApplyButton_posY = self.svgHeight - self.margin.bottom - self.buttonHeight
+    self.CancelButton_posX = self.svgWidth - self.margin.right*2 - self.buttonWidth*2
+    self.CancelButton_posY = self.svgHeight - self.margin.bottom - self.buttonHeight
+    self.filterPanelWidth = self.optionsPanel_posX - 2
+    self.filterPanelHeight = self.ApplyButton_posY - 10
+    self.filterDiv_posX = 200
+    self.filterDiv_posY = 100
+    self.filterPanelsDiv_posX = self.filterDiv_posX + 1
+    self.filterPanelsDiv_posY = self.filterDiv_posY + 1
+    self.sliderWidth = self.filterPanelWidth - self.margin.left - self.margin.right
+    self.sliderHeight = 20
+    self.slider_posX = self.margin.left
+    self.slider_posY = self.filterPanelHeight*(3/4)
+    self.axis_posX = self.slider_posX
+    self.axis_posY = self.slider_posY + self.sliderHeight
+    self.brush_posX1 = self.slider_posX
+    self.brush_posX2 = self.slider_posX + self.sliderWidth
+    self.brush_posY1 = self.slider_posY
+    self.brush_posY2 = self.slider_posY + self.sliderHeight
+
+    self.filterDiv = d3.select('body').append('div')
+        .attr('id', 'filterDiv')
+        .style('position', 'fixed')
+        .style('background-color', 'white')
+        // .style('border-radius', '15px')
+        // .style('left','800px')
+        // .style('top', '800px')
+        .style('left','' + self.filterDiv_posX + 'px')
+        .style('top', '' + self.filterDiv_posY + 'px')
 
     //creates svg element within the div
     self.svg = self.filterDiv
         .append('svg')
+        .attr('id','filterSVG')
+        // .attr('width', 0)
+        // .attr('height', 0)
+        // .transition()
+        // .duration(2000)
         .attr('width', self.svgWidth)
         .attr('height', self.svgHeight)
 
     self.filterOptionsData = [
-        {'filter':'Tuition'}
-        ,{'filter':'Admission Rate'}
-        ,{'filter':'School Size'}
-        ,{'filter':'Avg SAT Score'}
+        {'filter':'COST'}
+        ,{'filter':'ADM_RATE_ALL'}
+        ,{'filter':'CCSIZSET'}
+        ,{'filter':'SAT_AVG_ALL'}
         ,{'filter':'State'}
     ]
 
@@ -106,47 +128,63 @@ FilterPanel.prototype.init = function(){
         .attr('y', function (d,i) {return self.options_posY_start + i*40})
         .style('cursor', 'pointer')
         .on('mouseover', function (d) {
-            var innerSelf = this
-            d3.select(innerSelf)
+            var optionSelf = this
+            d3.select(optionSelf)
                 .classed('filterHovered', true)
                 .classed('filterNotHovered', false)
             d3.selectAll('.textOptions')
                 .filter(function (d) {
-                    return this.id == innerSelf.id
+                    return this.id == optionSelf.id
                 })
                 .classed('textFilterHovered', true)
                 .classed('textFilterNotHovered', false)
         })
         .on('mouseout', function (d) {
-            var innerSelf = this
-            d3.select(innerSelf)
+            var optionSelf = this
+            d3.select(optionSelf)
                 .classed('filterHovered', false)
                 .classed('filterNotHovered', true)
             d3.selectAll('.textOptions')
                 .filter(function (d) {
-                    return this.id == innerSelf.id
+                    return this.id == optionSelf.id
                 })
                 .classed('textFilterHovered', false)
                 .classed('textFilterNotHovered', true)
         })
         .on('click', function (d) {
-            var innerSelf = this
+            var optionSelf = this
             d3.selectAll('.textOptions')
                 .classed('textFilterClicked', false)
                 .classed('textFilterNotClicked', true)
                 .filter(function (d) {
-                    return this.id == innerSelf.id
+                    return this.id == optionSelf.id
                 })
                 .classed('textFilterClicked', true)
                 .classed('textFilterNotClicked', false)
+
             d3.selectAll('.options')
                 .classed('filterClicked', false)
                 .classed('filterNotClicked', true)
-            d3.select(innerSelf)
+
+            d3.select(optionSelf)
                 .classed('filterNotClicked', false)
                 .classed('filterClicked', true)
 
+            d3.selectAll('.FilterPanelDiv')
+                .style('z-index',-100)
+                .filter(function (d) {
+                    return this.id == optionSelf.id + 'FilterPanelDiv'
+                })
+                .style('z-index',100)
+
         })
+
+    self.filterSelected = self.filterOptionsPanel.selectAll('.options')
+        .filter(function (d) {return d.filter == self.filterOptionsData[0]['filter']})
+        .classed('filterClicked',true)
+        .classed('filterNotClicked', true)
+        .classed('filterNotHovered',true)
+        .classed('filterHovered',false)
 
     self.textFilterSelections = self.filterOptionsPanel.selectAll('.textOptions').data(self.filterOptionsData)
         .enter()    
@@ -164,44 +202,92 @@ FilterPanel.prototype.init = function(){
         .attr("dominant-baseline", "central")       
         .style('cursor', 'pointer')
         .on('mouseover', function (d) {
-            var innerSelf = this
-            d3.select(innerSelf)
+            var textOptionSelf = this
+            d3.select(textOptionSelf)
                 .classed('textFilterHovered', true)
                 .classed('textFilterNotHovered', false)
+
             d3.selectAll('.options')
-                .filter(function (d) {return this.id == innerSelf.id})
+                .filter(function (d) {return this.id == textOptionSelf.id})
                 .classed('filterHovered', true)
                 .classed('filterNotHovered', false)
         })
         .on('mouseout', function (d) {
-            var innerSelf = this
-            d3.select(innerSelf)
+            var textOptionSelf = this
+            d3.select(textOptionSelf)
                 .classed('textFilterHovered', false)
                 .classed('textFilterNotHovered', true)
+
             d3.selectAll('.options')
                 .filter(function (d) {
-                    return this.id == innerSelf.id
+                    return this.id == textOptionSelf.id
                 })
                 .classed('filterHovered', false)
                 .classed('filterNotHovered', true)
         })
         .on('click', function (d) {
-            var innerSelf = this
+            var textOptionSelf = this
             d3.selectAll('.options')
                 .classed('filterClicked', false)
                 .classed('filterNotClicked', true)
                 .filter(function (d) {
-                    return this.id == innerSelf.id
+                    return this.id == textOptionSelf.id
                 })
                 .classed('filterClicked', true)
                 .classed('filterNotClicked', false)
+
             d3.selectAll('.textOptions')
                 .classed('textFilterNotClicked', true)
                 .classed('textFilterClicked', false)
-            d3.select(innerSelf)
+
+            d3.select(textOptionSelf)
                 .classed('textFilterNotClicked', false)
                 .classed('textFilterClicked', true)
+
+            d3.selectAll('.FilterPanelDiv')
+                .style('z-index',-100)
+                .filter(function (d) {
+                    return this.id == textOptionSelf.id + 'FilterPanelDiv'
+                })
+                .style('z-index',100)
         })
+
+    self.filterSelected = self.filterOptionsPanel.selectAll('.textOptions')
+        .filter(function (d) {return d.filter == self.filterOptionsData[0]['filter']})
+        .classed('textFilterClicked',true)
+        .classed('textFilterNotClicked', true)
+        .classed('textFilterNotHovered',true)
+        .classed('textFilterHovered',false)
+
+    self.filterPanels = d3.select('body').selectAll('.FilterPanelDiv').data(self.filterOptionsData)
+        .enter()
+        .append('div')
+        .attr('class', 'FilterPanelDiv')
+        .attr('id', function (d) {return d.filter + 'FilterPanelDiv'})
+        .style('position', 'fixed')
+        .style('background-color', 'white')
+        //.style('border-radius', '25px')
+        .style('left','' + self.filterPanelsDiv_posX + 'px')
+        .style('top','' + self.filterPanelsDiv_posY + 'px')
+        .style('z-index',1)
+        .style('opacity', 1)
+
+    self.filterPanels
+        .filter(function (d) {return d.filter == self.filterOptionsData[0]['filter']})
+        .style('z-index',5)
+
+    self.filterPanelSVG = self.filterPanels
+        .append('svg')
+        .attr('id', function (d) {return d.filter + 'FilterPanelSVG'})
+        .attr('class','FilterPanelSVG')
+        .attr('width', self.filterPanelWidth)
+        .attr('height', self.filterPanelHeight)   
+
+    self.drawMap()
+    self.drawSlider(self.filterOptionsData[0]['filter'])
+    self.drawSlider(self.filterOptionsData[1]['filter'])
+    self.drawSlider(self.filterOptionsData[2]['filter'])
+    self.drawSlider(self.filterOptionsData[3]['filter'])
 
     self.svg
         .append('rect')
@@ -210,8 +296,8 @@ FilterPanel.prototype.init = function(){
         .attr('fill', 'blue')
         .attr('rx',"15")
         .attr('ry',"15")
-        .attr('x', self.svgWidth - self.margin.right - self.buttonWidth)
-        .attr('y', self.svgHeight - self.margin.bottom - self.buttonHeight)
+        .attr('x', self.ApplyButton_posX)
+        .attr('y', self.ApplyButton_posY)
         .style('cursor', 'pointer')
         .attr('stroke', 'black')
         .on('click', function (d) {self.applyFilters()})
@@ -224,11 +310,12 @@ FilterPanel.prototype.init = function(){
         .attr('fill', 'red')
         .attr('rx',"15")
         .attr('ry',"15")
-        .attr('x', self.svgWidth - self.margin.right*2 - self.buttonWidth*2)
-        .attr('y', self.svgHeight - self.margin.bottom - self.buttonHeight)
+        .attr('x', self.CancelButton_posX)
+        .attr('y', self.CancelButton_posY)
         .style('cursor', 'pointer')
         .attr('stroke', 'black')
         .on('click', function (d) {
+            d3.selectAll('.FilterPanelDiv').remove()
             d3.select('#filterDiv').remove()
             delete self
         })
@@ -257,6 +344,7 @@ FilterPanel.prototype.init = function(){
         .attr("dominant-baseline", "central") 
         .style('cursor', 'pointer')
         .on('click', function (d) {
+            d3.selectAll('.FilterPanelDiv').remove()
             d3.select('#filterDiv').remove()
             delete self
         })
@@ -269,236 +357,38 @@ FilterPanel.prototype.init = function(){
 
 FilterPanel.prototype.update = function () { //function(selectedDimension){
     var self = this;
-
-    d3.json("data/us-states.json", function (error, nation) {
-        if (error) throw error;
-        self.drawMap(nation);
-    });
-
-    var tuitionScale = d3.scaleLinear()
-        .domain([0, d3.max(self.schoolData, function (d) {
-            return +d['COST'];
-        })])
-        .range([0, self.sliderWidth]);
-
-    var sizeScale = d3.scaleLinear()
-        .domain([0, d3.max(self.schoolData, function (d) {
-            return +d['CCSIZSET'];
-        })])
-        .range([0, self.sliderWidth]);
-
-    var SAT_Scale = d3.scaleLinear()
-        .domain([0, d3.max(self.schoolData, function (d) {
-            return +d['SAT_AVG_ALL'];
-        })])
-        .range([0, self.sliderWidth]);
-
-    var admRateScale = d3.scaleLinear()
-        .domain([0, d3.max(self.schoolData, function (d) {
-            return +d['ADM_RATE_ALL'];
-        })])
-        .range([0, self.sliderWidth]);
-
-    var tuitionSliderGroup = self.svg
-        .append('g')
-        .attr('id', 'tuitionSlider')
-
-    self.svg
-        .append('text')
-        .text('What tuition range are you interested in?')
-        .attr('y', self.firstTextPosition + self.sliderSpacing*0)
-        .attr('x', self.margin.left)
-        .style('cursor', 'default')
-
-    self.svg
-        .append('text')
-        .text('What school size range are you interested in?')
-        .attr('y', self.firstTextPosition + self.sliderSpacing*1)
-        .attr('x', self.margin.left)
-        .style('cursor', 'default')
-
-    self.svg
-        .append('text')
-        .text('What SAT range are you interested in?')
-        .attr('y', self.firstTextPosition + self.sliderSpacing*2)
-        .attr('x', self.margin.left)
-        .style('cursor', 'default')
-
-    self.svg
-        .append('text')
-        .text('What admission rate range are you interested in?')
-        .attr('y', self.firstTextPosition + self.sliderSpacing*3)
-        .attr('x', self.margin.left)
-        .style('cursor', 'default')
-
-    tuitionSliderGroup
-        .append('rect')
-        .attr('id', 'tuitionBar')
-        .attr('width', self.sliderWidth)
-        .attr('height', self.sliderHeight)
-        .attr('x', self.margin.left)
-        .attr('y', self.firstSliderPosition + self.sliderSpacing*0)
-
-    var sizeSliderGroup = self.svg
-        .append('g')
-        .attr('id', 'sizeSlider')
-
-    sizeSliderGroup
-        .append('rect')
-        .attr('id', 'sizeBar')
-        .attr('width', self.sliderWidth)
-        .attr('height', self.sliderHeight)
-        .attr('x', self.margin.left)
-        .attr('y', self.firstSliderPosition + self.sliderSpacing*1)
-
-    var SAT_SliderGroup = self.svg
-        .append('g')
-        .attr('id', 'SAT_Slider')
-
-    SAT_SliderGroup
-        .append('rect')
-        .attr('id', 'SAT_Bar')
-        .attr('width', self.sliderWidth)
-        .attr('height', self.sliderHeight)
-        .attr('x', self.margin.left)
-        .attr('y', self.firstSliderPosition + self.sliderSpacing*2)
-
-    var admRateSliderGroup = self.svg
-        .append('g')
-        .attr('id', 'admRateSlider')
-
-    admRateSliderGroup
-        .append('rect')
-        .attr('id', 'admRateBar')
-        .attr('width', self.sliderWidth)
-        .attr('height', self.sliderHeight)
-        .attr('x', self.margin.left)
-        .attr('y', self.firstSliderPosition + self.sliderSpacing*3)
-
-    // create a new Slider that has the ticks and labels on the bottom
-    var tuitionAxis = d3.axisBottom()
-    // assign the scale to the Slider
-        .scale(tuitionScale)
-
-    tuitionSliderGroup
-        .append('g')
-        .attr("transform", "translate(" + self.margin.left + "," + (self.firstSliderPosition + self.sliderHeight + self.sliderSpacing*0) + ")")
-        .call(tuitionAxis)
-
-    // create a new Slider that has the ticks and labels on the bottom
-    var sizeAxis = d3.axisBottom()
-    // assign the scale to the Slider
-        .scale(sizeScale)
-
-    sizeSliderGroup
-        .append('g')
-        .attr("transform", "translate(" + self.margin.left + "," + (self.firstSliderPosition + self.sliderHeight + self.sliderSpacing*1) + ")")
-        .call(sizeAxis)
-
-    // create a new Slider that has the ticks and labels on the bottom
-    var SAT_Axis = d3.axisBottom()
-    // assign the scale to the Slider
-        .scale(SAT_Scale)
-
-    SAT_SliderGroup
-        .append('g')
-        .attr("transform", "translate(" + self.margin.left + "," + (self.firstSliderPosition + self.sliderHeight + self.sliderSpacing*2) + ")")
-        .call(SAT_Axis)
-
-    // create a new Slider that has the ticks and labels on the bottom
-    var admRateAxis = d3.axisBottom()
-    // assign the scale to the Slider
-        .scale(admRateScale)
-
-    admRateSliderGroup
-        .append('g')
-        .attr("transform", "translate(" + self.margin.left + "," + (self.firstSliderPosition + self.sliderHeight + self.sliderSpacing*3) + ")")
-        .call(admRateAxis)
-
-    var tuitionBrush = d3.brushX().extent([[self.margin.left,self.firstSliderPosition + self.sliderSpacing*0],[self.margin.left + self.sliderWidth,self.firstSliderPosition + self.sliderSpacing*0 + self.sliderHeight + 1]])
-
-    tuitionSliderGroup.append("g").attr("class", "brush").call(tuitionBrush);
-
-    tuitionBrush
-        .on("end", function(d){ self.tuitionBrushed(d)})
-
-    var sizeBrush = d3.brushX().extent([[self.margin.left,self.firstSliderPosition + self.sliderSpacing*1],[self.margin.left + self.sliderWidth,self.firstSliderPosition + self.sliderSpacing*1 + self.sliderHeight + 1]])
-
-    sizeSliderGroup.append("g").attr("class", "brush").call(sizeBrush);
-
-    sizeBrush
-        .on("end", function(d){ self.sizeBrushed(d)})
-
-    var SAT_Brush = d3.brushX().extent([[self.margin.left,self.firstSliderPosition + self.sliderSpacing*2],[self.margin.left + self.sliderWidth,self.firstSliderPosition + self.sliderSpacing*2 + self.sliderHeight + 1]])
-
-    SAT_SliderGroup.append("g").attr("class", "brush").call(SAT_Brush);
-
-    SAT_Brush
-        .on("end", function(d){ self.SAT_Brushed(d)})
-
-    var admRateBrush = d3.brushX().extent([[self.margin.left,self.firstSliderPosition + self.sliderSpacing*3],[self.margin.left + self.sliderWidth,self.firstSliderPosition + self.sliderSpacing*3 +self.sliderHeight + 1]])
-
-    admRateSliderGroup.append("g").attr("class", "brush").call(admRateBrush);
-
-    admRateBrush
-        .on("end", function(d){ self.admRateBrushed(d)})
 }
 
-FilterPanel.prototype.tuitionBrushed = function(d) {
+FilterPanel.prototype.brushed = function(panelName) {
     var self = this;
 
-    var reverseTuitionScale = d3.scaleLinear()
+    var reverseScale = d3.scaleLinear()
     .domain([self.margin.left, self.sliderWidth])
     .range([0, d3.max(self.schoolData, function (d) {
-            return +d['COST'];
+            return +d[panelName];
         })])
 
-    d3.event.selection.forEach(function(coordinate, index) {
-        self.tuitionBrushCoordinates[index] = reverseTuitionScale(coordinate);
-    });
-};
+    if (panelName == self.filterOptionsData[0]['filter']) {
+        d3.event.selection.forEach(function(coordinate, index) {
+            self.tuitionBrushCoordinates[index] = reverseScale(coordinate);
+        });
+    }
+    else if (panelName == self.filterOptionsData[1]['filter']) {
+        d3.event.selection.forEach(function(coordinate, index) {
+            self.admRateBrushCoordinates[index] = reverseScale(coordinate);
+        });
+    }
+    else if (panelName == self.filterOptionsData[2]['filter']) {
+        d3.event.selection.forEach(function(coordinate, index) {
+            self.sizeBrushCoordinates[index] = reverseScale(coordinate);
+        });
+    }
+    else if (panelName == self.filterOptionsData[3]['filter']) {
+        d3.event.selection.forEach(function(coordinate, index) {
+            self.SAT_BrushCoordinates[index] = reverseScale(coordinate);
+        });
+    }
 
-FilterPanel.prototype.sizeBrushed = function(d) {
-    var self = this;    
-
-    var reverseSizeScale = d3.scaleLinear()
-    .domain([self.margin.left, self.sliderWidth])
-    .range([0, d3.max(self.schoolData, function (d) {
-            return +d['CCSIZSET'];
-        })])
-
-    d3.event.selection.forEach(function(coordinate, index) {
-        self.sizeBrushCoordinates[index] = reverseSizeScale(coordinate);
-    });
-};
-
-FilterPanel.prototype.SAT_Brushed = function(d) {
-    var self = this;
-
-    var reverseSAT_Scale = d3.scaleLinear()
-    .domain([self.margin.left, self.sliderWidth])
-    .range([0, d3.max(self.schoolData, function (d) {
-            return +d['SAT_AVG_ALL'];
-        })])
-
-    d3.event.selection.forEach(function(coordinate, index) {
-        self.SAT_BrushCoordinates[index] = reverseSAT_Scale(coordinate);
-    });
-    
-};
-
-FilterPanel.prototype.admRateBrushed = function(d) {
-    var self = this;
-
-    var reverseAdmRateScale = d3.scaleLinear()
-    .domain([self.margin.left, self.sliderWidth])
-    .range([0, d3.max(self.schoolData, function (d) {
-            return +d['ADM_RATE_ALL'];
-        })])
-
-    d3.event.selection.forEach(function(coordinate, index) {
-        self.admRateBrushCoordinates[index] = reverseAdmRateScale(coordinate);
-    });
     
 };
 
@@ -537,7 +427,6 @@ FilterPanel.prototype.selectData = function(d) {
         for (similarSchoolId in schoolData.similarSchools) {
             if (!schools[similarSchoolId]) {
                 delete schoolData.similarSchools[similarSchoolId]
-                //console.log('delete ' + similarSchoolId)
             }
             else {
                 schoolData.similarSchools[similarSchoolId] = schools[similarSchoolId]
@@ -552,31 +441,110 @@ FilterPanel.prototype.selectData = function(d) {
     
 };
 
-FilterPanel.prototype.drawMap = function (nation) {
+FilterPanel.prototype.drawMap = function () {
     var self = this;
-    var mapGroup = self.svg
+
+    var mapGroup = d3.selectAll('.FilterPanelSVG')
+        .filter(function (d) {return this.id == 'StateFilterPanelSVG'})
         .append('g')
+        .attr('id','thisMap')
         //.attr("transform", "translate(" + self.svgWidth/4 + "," + self.margin.top + ")")
 
     var projection = d3.geoAlbersUsa()
-            .translate([self.margin.left + self.sliderWidth + self.margin.right*5, self.margin.top + self.svgHeight/3])
-            .scale([self.svgWidth - self.margin.left - self.sliderWidth]);
+            .translate([(self.svgWidth - self.margin.right - self.optionsPanelWidth)/2, self.margin.top + self.svgHeight/3])
+            .scale([self.svgWidth*(4/5)]);
 
     var path = d3.geoPath()
             .projection(projection);
-    
+
     mapGroup.selectAll("path")
-        .data(nation.features)
+        .data(self.nation.features)
         .enter()
         .append("path")
+        .style('fill','red')
         .attr("d", path)
-        .attr('fill', 'green')
+        .classed('stateSelected', true)
+        .style('cursor', 'pointer')
+
+    self.country = d3.select("#thisMap").selectAll("path")
+    
+    self.country.on("click", function (d) {
+        selectedState = d3.select(this)
+    
+        if (selectedState.classed('stateSelected')) {
+            selectedState
+                .style('fill','green')
+                .classed('stateSelected',false)
+        }
+        else {
+            selectedState
+                .style('fill','red')
+                .classed('stateSelected',true)
+        }
+    })
 }    
+
+FilterPanel.prototype.drawSlider = function (filterName) {
+    var self = this
+
+    var sliderScale = d3.scaleLinear()
+    .domain([0, d3.max(self.schoolData, function (d) {
+        return +d[filterName];
+    })])
+    .range([0, self.sliderWidth]);
+
+    // create a new Slider that has the ticks and labels on the bottom
+    var axis = d3.axisBottom()
+    // assign the scale to the Slider
+        .scale(sliderScale)
+
+    var filterPanelSVG = d3.selectAll('.FilterPanelSVG')
+        .filter(function (d) {
+            return this.id == filterName + 'FilterPanelSVG'
+        })
+
+    var sliderGroup = filterPanelSVG
+        .append('g')
+        //.attr('id',panel + 'Group')
+        .append('rect')
+        //.attr('id', 'tuitionBar')
+        .attr('width', self.sliderWidth)
+        .attr('height', self.sliderHeight)
+        .attr('x', self.slider_posX)
+        .attr('y', self.slider_posY)
+
+    var axisGroup = filterPanelSVG
+        .append('g')
+        .attr("transform", "translate(" + self.axis_posX + "," + self.axis_posY + ")")
+        .call(axis)
+
+    var brush = d3.brushX().extent([[self.brush_posX1,self.brush_posY1],[self.brush_posX2,self.brush_posY2]])
+
+    var brushGroup = filterPanelSVG
+        .append("g")
+        .attr("class", "brush")
+        .call(brush);
+
+    brush
+        .on("end", function(d){ self.brushed(filterName)})
+
+    // tuitionSliderGroup
+    //     .append('rect')
+    //     .attr('id', 'tuitionBar')
+    //     .attr('width', self.sliderWidth)
+    //     .attr('height', self.sliderHeight)
+    //     .attr('x', self.margin.left)
+    //     .attr('y', self.sliderPosition + self.sliderSpacing*0)
+
+
+}
 
 FilterPanel.prototype.applyFilters = function () {
     var self = this
     self.selectData()
     self.barChart.updateData(self.selectedSchools)
+    d3.selectAll('.FilterPanelDiv').remove()
     d3.select('#filterDiv').remove()
     delete self
 }
+

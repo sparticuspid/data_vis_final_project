@@ -4,7 +4,7 @@
 //Dylan Zwick
 //u0075213
 
-function Script (barChart, schoolData) {
+function Script (barChart, schoolData, nation) {
     var self = this;
     self.barChart = barChart
     // self.electoralVoteChart = electoralVoteChart;
@@ -12,12 +12,12 @@ function Script (barChart, schoolData) {
     // self.votePercentageChart = votePercentageChart;
     // self.shiftChart = shiftChart;
     self.schoolData = schoolData;
+    self.nation = nation;
     self.init();
 };
 
 Script.prototype.init = function(){
     var self = this;
-    // console.log('5')
     self.update()
     self.mapWidth = 500
     self.mapHeight = 300
@@ -26,7 +26,6 @@ Script.prototype.init = function(){
 Script.prototype.update = function() {
     var self = this;
 
-    // console.log('6')
     schoolNames = self.schoolData.map(function(d,i){return d.INSTNM});
     $( function() {
     $("#schoolchoice").autocomplete({
@@ -92,9 +91,9 @@ Script.prototype.updateMainInfo = function (selectedSchool) {
     var similarSchools = schoolMatrix.filter(function(d){
 	return d.UNITID == selectedSchoolData.UNITID})[0];
     var similarSchoolIDs = $.map(similarSchools, function(d,i){return[d]});
-    console.log(similarSchoolIDs)
+
     var similarSchoolsArray = [];
-    // console.log('sim: ' + similarSchools)
+
     for(var i = 0; i < similarSchoolIDs.length; i++)
     {
 	similarSchoolsArray.push(
@@ -269,12 +268,10 @@ Script.prototype.drawMap = function (nation) {
 
 Script.prototype.clickFilter = function () {
     var self = this
-    console.log('here')
+
     d3.csv("data/similarity_rankings_top30.csv", function (similarityData) {
         data = {}
 
-        console.log('this is similarityData: ')
-        console.log(similarityData)
         for (var row in similarityData) {
             var similarSchools = {}
             for (var i = 1; i <= 30; i++) {
@@ -283,9 +280,7 @@ Script.prototype.clickFilter = function () {
             data[similarityData[row]['UNITID']] = similarSchools;
         }
 
-        //console.log(data)
-        console.log('new data:' + data)
-        var filterPanel = new FilterPanel(self.barChart, self.schoolData, data);
+        var filterPanel = new FilterPanel(self.barChart, self.schoolData, self.nation, data);
         filterPanel.update()
     });
 

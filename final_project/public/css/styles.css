@@ -18,6 +18,9 @@ u0075213*/
     background-color: red;
     border-radius: 25px;
 }*/
+body {
+    background-color: rgb(237,238,240);
+}
 
 .filterNotClicked {
     fill: black;
@@ -94,11 +97,6 @@ u0075213*/
     opacity: .8;
 }
 
-.countries {
-    stroke: #f7f7f7;
-    fill: #d9d9d9;
-}
-
 .legend-element {
     width: 15px;
     height: 15px;
@@ -127,10 +125,6 @@ u0075213*/
     fill: #d9d9d9;
     opacity: .8;
     stroke: #252525;
-}
-
-.selected {
-    fill: #d20a11;
 }
 
 /*Map grid style*/
@@ -252,6 +246,15 @@ header {
 .brush .selection {
     fill-opacity: 1;   
     fill: red;
+}
+
+.stateSelected {
+    background-color: red;
+}
+
+#filterDiv {
+    filter: drop-shadow(10px 10px 5px rgba(0,0,0,0.5));
+    border: 1px;
 }
 /* Styles that clean up the layout;
  * you can ignore these: */
