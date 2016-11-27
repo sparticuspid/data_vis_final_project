@@ -281,7 +281,7 @@ Script.prototype.clickFilter = function () {
         }
 
         var filterPanel = new FilterPanel(self.barChart, self.schoolData, self.nation, data);
-        filterPanel.update()
+        //filterPanel.update()
     });
 
 }

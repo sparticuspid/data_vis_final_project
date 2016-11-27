@@ -22,6 +22,15 @@ function FilterPanel(barChart, schoolData, nation, similarityData) {
  */
 FilterPanel.prototype.init = function(){
     var self = this;
+
+    self.filterOptionsData = [
+        {'filter':'COST'}
+        ,{'filter':'ADM_RATE_ALL'}
+        ,{'filter':'CCSIZSET'}
+        ,{'filter':'SAT_AVG_ALL'}
+        ,{'filter':'State'}
+    ]
+
     self.tuitionBrushCoordinates = [d3.min(self.schoolData, function (d) {return +d['COST']}),
                                     d3.max(self.schoolData, function (d) {return +d['COST']})]
     self.sizeBrushCoordinates = [d3.min(self.schoolData, function (d) {return +d['CCSIZSET']}),
@@ -30,13 +39,27 @@ FilterPanel.prototype.init = function(){
                                     d3.max(self.schoolData, function (d) {return +d['SAT_AVG_ALL']})]
     self.admRateBrushCoordinates = [d3.min(self.schoolData, function (d) {return +d['ADM_RATE_ALL']}),
                                     d3.max(self.schoolData, function (d) {return +d['ADM_RATE_ALL']})]
-    self.selectedSchools = []
+    
+    self.brushCoordinates = {}
+
+
+    for (i = 0; i < self.filterOptionsData.length - 1; i++) {
+        var coordinates = []
+        coordinates[0] = 0 //d3.min(self.schoolData, function (d) {return +d[self.filterOptionsData[i]['filter']]})
+        coordinates[1] = d3.max(self.schoolData, function (d) {return +d[self.filterOptionsData[i]['filter']]})
+        self.brushCoordinates[self.filterOptionsData[i]['filter']] = coordinates
+    }
+
+    console.log(self.brushCoordinates)
+
+    self.selectedSchools = self.schoolData
+    self.histogram_arr_alt = {}
 
     self.margin = {top: 30, right: 30, bottom: 30, left: 30};
 
 
     // //Gets access to the div element created for this chart from HTML
-    self.svgWidth = window.innerWidth - 400;
+    self.svgWidth = window.innerWidth - 600;
     self.svgHeight = window.innerHeight - 200;
     self.firstTextPosition = 30
     self.mapWidth = 300
@@ -58,8 +81,8 @@ FilterPanel.prototype.init = function(){
     self.CancelButton_posX = self.svgWidth - self.margin.right*2 - self.buttonWidth*2
     self.CancelButton_posY = self.svgHeight - self.margin.bottom - self.buttonHeight
     self.filterPanelWidth = self.optionsPanel_posX - 2
-    self.filterPanelHeight = self.ApplyButton_posY - 10
-    self.filterDiv_posX = 200
+    self.filterPanelHeight = self.ApplyButton_posY - 60
+    self.filterDiv_posX = 300
     self.filterDiv_posY = 100
     self.filterPanelsDiv_posX = self.filterDiv_posX + 1
     self.filterPanelsDiv_posY = self.filterDiv_posY + 1
@@ -73,12 +96,33 @@ FilterPanel.prototype.init = function(){
     self.brush_posX2 = self.slider_posX + self.sliderWidth
     self.brush_posY1 = self.slider_posY
     self.brush_posY2 = self.slider_posY + self.sliderHeight
+    self.freqDistGroup_posX = self.slider_posX
+    self.freqDistGroup_posY = self.slider_posY - 10
+    self.freqDistGroupHeight = self.freqDistGroup_posY - self.margin.top
+    self.freqDistGroupWidth = self.sliderWidth
+    self.ticksCount = 10
+    self.selectedSchoolCountContainerWidth = 80
+    self.selectedSchoolCountContainerHeight = 60
+    self.selectedSchoolCountContainer_posX = self.margin.left
+    self.selectedSchoolCountContainer_posY = self.svgHeight - self.margin.bottom - self.selectedSchoolCountContainerHeight
+
+    d3.select('body').append('div')
+        .style('position', 'fixed')
+        .style('background-color', 'grey')
+        .style('opacity', .8)
+        .style('left','0px')
+        .style('top', '0px')
+        .append('svg')
+        .attr('width', window.innerWidth)
+        .attr('height', window.innerHeight)
+        //.attr('fill', 'black')
+        
 
     self.filterDiv = d3.select('body').append('div')
         .attr('id', 'filterDiv')
         .style('position', 'fixed')
         .style('background-color', 'white')
-        // .style('border-radius', '15px')
+        .style('border-radius', '15px')
         // .style('left','800px')
         // .style('top', '800px')
         .style('left','' + self.filterDiv_posX + 'px')
@@ -94,14 +138,6 @@ FilterPanel.prototype.init = function(){
         // .duration(2000)
         .attr('width', self.svgWidth)
         .attr('height', self.svgHeight)
-
-    self.filterOptionsData = [
-        {'filter':'COST'}
-        ,{'filter':'ADM_RATE_ALL'}
-        ,{'filter':'CCSIZSET'}
-        ,{'filter':'SAT_AVG_ALL'}
-        ,{'filter':'State'}
-    ]
 
     self.filterOptionsPanel = self.svg
 
@@ -266,7 +302,7 @@ FilterPanel.prototype.init = function(){
         .attr('id', function (d) {return d.filter + 'FilterPanelDiv'})
         .style('position', 'fixed')
         .style('background-color', 'white')
-        //.style('border-radius', '25px')
+        .style('border-radius', '15px')
         .style('left','' + self.filterPanelsDiv_posX + 'px')
         .style('top','' + self.filterPanelsDiv_posY + 'px')
         .style('z-index',1)
@@ -284,12 +320,16 @@ FilterPanel.prototype.init = function(){
         .attr('height', self.filterPanelHeight)   
 
     self.drawMap()
-    self.drawSlider(self.filterOptionsData[0]['filter'])
-    self.drawSlider(self.filterOptionsData[1]['filter'])
-    self.drawSlider(self.filterOptionsData[2]['filter'])
-    self.drawSlider(self.filterOptionsData[3]['filter'])
+    // self.drawSlider(self.filterOptionsData[0]['filter'])
+    // self.drawSlider(self.filterOptionsData[1]['filter'])
+    // self.drawSlider(self.filterOptionsData[2]['filter'])
+    // self.drawSlider(self.filterOptionsData[3]['filter'])
 
-    self.svg
+    for (i = 0; i < self.filterOptionsData.length - 1; i++) {
+        self.drawSlider(self.filterOptionsData[i]['filter'])
+    }
+
+    self.applyButton = self.svg
         .append('rect')
         .attr('height',self.buttonHeight)
         .attr('width',self.buttonWidth)
@@ -303,7 +343,7 @@ FilterPanel.prototype.init = function(){
         .on('click', function (d) {self.applyFilters()})
 
 
-    self.svg
+    self.cancelButton = self.svg
         .append('rect')
         .attr('height',self.buttonHeight)
         .attr('width',self.buttonWidth)
@@ -321,7 +361,7 @@ FilterPanel.prototype.init = function(){
         })
         
 
-    self.applyText  = self.svg
+    self.applyButtonText = self.svg
         .append('text')
         .text('Apply')
         .attr('width', 100)
@@ -334,7 +374,7 @@ FilterPanel.prototype.init = function(){
         .on('click', function (d) {self.applyFilters()})
         
 
-    self.cancelText = self.svg
+    self.cancelButtonText = self.svg
         .append('text')
         .text('Cancel')
         .attr('x', self.svgWidth - self.margin.right*2 - self.buttonWidth*1.5)
@@ -349,6 +389,26 @@ FilterPanel.prototype.init = function(){
             delete self
         })
 
+    self.selectedSchoolCount = self.svg
+        .append('rect')
+        .attr('stroke', 'black')
+        .attr('stroke-width', 5)
+        .attr('height',self.selectedSchoolCountContainerHeight)
+        .attr('width',self.selectedSchoolCountContainerWidth)
+        .attr('fill', 'red')
+        .attr('x', self.selectedSchoolCountContainer_posX)
+        .attr('y', self.selectedSchoolCountContainer_posY)  
+
+    self.selectedSchoolCountText = self.svg
+        .append('text')
+        .attr('id','selectedSchoolCountText')
+        .text(self.schoolData.length)
+        .attr('x', self.selectedSchoolCountContainer_posX + self.selectedSchoolCountContainerWidth/2)
+        .attr('y', self.selectedSchoolCountContainer_posY + self.selectedSchoolCountContainerHeight/2) 
+        .attr('fill', 'black')
+        .attr('font-size',25)
+        .style('text-anchor', 'middle')
+        .attr("dominant-baseline", "central") 
 };
 
 /**
@@ -357,93 +417,89 @@ FilterPanel.prototype.init = function(){
 
 FilterPanel.prototype.update = function () { //function(selectedDimension){
     var self = this;
+    console.log('update')
+    d3.select('#selectedSchoolCountText') //self.selectedSchoolCountText
+        .text(self.selectedSchools.length)
+
 }
 
-FilterPanel.prototype.brushed = function(panelName) {
+FilterPanel.prototype.brushed = function(filterName) {
     var self = this;
 
     var reverseScale = d3.scaleLinear()
-    .domain([self.margin.left, self.sliderWidth])
+    .domain([self.slider_posX, self.slider_posX + self.sliderWidth])
     .range([0, d3.max(self.schoolData, function (d) {
-            return +d[panelName];
+            return +d[filterName];
         })])
 
-    if (panelName == self.filterOptionsData[0]['filter']) {
-        d3.event.selection.forEach(function(coordinate, index) {
-            self.tuitionBrushCoordinates[index] = reverseScale(coordinate);
-        });
-    }
-    else if (panelName == self.filterOptionsData[1]['filter']) {
-        d3.event.selection.forEach(function(coordinate, index) {
-            self.admRateBrushCoordinates[index] = reverseScale(coordinate);
-        });
-    }
-    else if (panelName == self.filterOptionsData[2]['filter']) {
-        d3.event.selection.forEach(function(coordinate, index) {
-            self.sizeBrushCoordinates[index] = reverseScale(coordinate);
-        });
-    }
-    else if (panelName == self.filterOptionsData[3]['filter']) {
-        d3.event.selection.forEach(function(coordinate, index) {
-            self.SAT_BrushCoordinates[index] = reverseScale(coordinate);
-        });
-    }
+    d3.event.selection.forEach(function(coordinate, index) {
+        self.brushCoordinates[filterName][index] = reverseScale(coordinate);
+    });
 
-    
+
+
+    // if (filterName == self.filterOptionsData[0]['filter']) {
+    //     d3.event.selection.forEach(function(coordinate, index) {
+    //         self.tuitionBrushCoordinates[index] = reverseScale(coordinate);
+    //     });
+    // }
+    // else if (filterName == self.filterOptionsData[1]['filter']) {
+    //     d3.event.selection.forEach(function(coordinate, index) {
+    //         self.admRateBrushCoordinates[index] = reverseScale(coordinate);
+    //     });
+    // }
+    // else if (filterName == self.filterOptionsData[2]['filter']) {
+    //     d3.event.selection.forEach(function(coordinate, index) {
+    //         self.sizeBrushCoordinates[index] = reverseScale(coordinate);
+    //     });
+    // }
+    // else if (filterName == self.filterOptionsData[3]['filter']) {
+    //     d3.event.selection.forEach(function(coordinate, index) {
+    //         self.SAT_BrushCoordinates[index] = reverseScale(coordinate);
+    //     });
+    // }
+
+    self.selectData()
+
 };
 
 FilterPanel.prototype.selectData = function(d) {
     var self = this;
 
+    // self.selectedSchools = self.schoolData.filter(function (d) {
+    //         return (
+    //             d['COST'] >= self.tuitionBrushCoordinates[0] &
+    //             d['COST'] <= self.tuitionBrushCoordinates[1] &
+    //             d['CCSIZSET'] >= self.sizeBrushCoordinates[0] &
+    //             d['CCSIZSET'] <= self.sizeBrushCoordinates[1] &
+    //             d['SAT_AVG_ALL'] >= self.SAT_BrushCoordinates[0] &
+    //             d['SAT_AVG_ALL'] <= self.SAT_BrushCoordinates[1] &
+    //             d['ADM_RATE_ALL'] >= self.admRateBrushCoordinates[0] &
+    //             d['ADM_RATE_ALL'] <= self.admRateBrushCoordinates[1]
+    //         )
+    //     });
+
     self.selectedSchools = self.schoolData.filter(function (d) {
-
-
             return (
-                d['COST'] >= self.tuitionBrushCoordinates[0] &
-                d['COST'] <= self.tuitionBrushCoordinates[1] &
-                d['CCSIZSET'] >= self.sizeBrushCoordinates[0] &
-                d['CCSIZSET'] <= self.sizeBrushCoordinates[1] &
-                d['SAT_AVG_ALL'] >= self.SAT_BrushCoordinates[0] &
-                d['SAT_AVG_ALL'] <= self.SAT_BrushCoordinates[1] &
-                d['ADM_RATE_ALL'] >= self.admRateBrushCoordinates[0] &
-                d['ADM_RATE_ALL'] <= self.admRateBrushCoordinates[1]
+                d[self.filterOptionsData[0]['filter']] >= self.brushCoordinates[self.filterOptionsData[0]['filter']][0] &
+                d[self.filterOptionsData[0]['filter']] <= self.brushCoordinates[self.filterOptionsData[0]['filter']][1] &
+                d[self.filterOptionsData[1]['filter']] >= self.brushCoordinates[self.filterOptionsData[1]['filter']][0] &
+                d[self.filterOptionsData[1]['filter']] <= self.brushCoordinates[self.filterOptionsData[1]['filter']][1] &
+                d[self.filterOptionsData[2]['filter']] >= self.brushCoordinates[self.filterOptionsData[2]['filter']][0] &
+                d[self.filterOptionsData[2]['filter']] <= self.brushCoordinates[self.filterOptionsData[2]['filter']][1] &
+                d[self.filterOptionsData[3]['filter']] >= self.brushCoordinates[self.filterOptionsData[3]['filter']][0] &
+                d[self.filterOptionsData[3]['filter']] <= self.brushCoordinates[self.filterOptionsData[3]['filter']][1]
             )
         });
 
-    var schools = {}
+    self.update()
 
-    for (index in self.selectedSchools) {
-        var schoolData = self.selectedSchools[index];
-        var similarSchools = {};
-        for (var id in self.similarityData[schoolData['UNITID']]) {
-            similarSchools[id] = id;
-        }
-        schoolData.similarSchools = similarSchools;
-        schools[schoolData['UNITID']] = schoolData;
-    }
-
-    for (schoolId in schools) {
-        var schoolData = schools[schoolId];
-        for (similarSchoolId in schoolData.similarSchools) {
-            if (!schools[similarSchoolId]) {
-                delete schoolData.similarSchools[similarSchoolId]
-            }
-            else {
-                schoolData.similarSchools[similarSchoolId] = schools[similarSchoolId]
-            }
-        }
-        //schoolData.similarSchools = Object.keys(schoolData.similarSchools).slice(0,15)
-        schoolData.similarSchools = Object.values(schoolData.similarSchools).slice(0,15)
-    }
-
-    self.selectedSchools = Object.values(schools);
-    
-    
-};
+}
 
 FilterPanel.prototype.drawMap = function () {
     var self = this;
 
+    console.log('draw map')
     var mapGroup = d3.selectAll('.FilterPanelSVG')
         .filter(function (d) {return this.id == 'StateFilterPanelSVG'})
         .append('g')
@@ -473,7 +529,7 @@ FilterPanel.prototype.drawMap = function () {
     
         if (selectedState.classed('stateSelected')) {
             selectedState
-                .style('fill','green')
+                .style('fill','black')
                 .classed('stateSelected',false)
         }
         else {
@@ -487,16 +543,18 @@ FilterPanel.prototype.drawMap = function () {
 FilterPanel.prototype.drawSlider = function (filterName) {
     var self = this
 
-    var sliderScale = d3.scaleLinear()
-    .domain([0, d3.max(self.schoolData, function (d) {
-        return +d[filterName];
-    })])
-    .range([0, self.sliderWidth]);
+    console.log('draw slider')
+
+    var slider_xScale = d3.scaleLinear()
+        .domain([0, d3.max(self.schoolData, function (d) {
+            return +d[filterName];
+        })])
+        .range([0, self.sliderWidth]);
 
     // create a new Slider that has the ticks and labels on the bottom
     var axis = d3.axisBottom()
     // assign the scale to the Slider
-        .scale(sliderScale)
+        .scale(slider_xScale)
 
     var filterPanelSVG = d3.selectAll('.FilterPanelSVG')
         .filter(function (d) {
@@ -505,9 +563,7 @@ FilterPanel.prototype.drawSlider = function (filterName) {
 
     var sliderGroup = filterPanelSVG
         .append('g')
-        //.attr('id',panel + 'Group')
         .append('rect')
-        //.attr('id', 'tuitionBar')
         .attr('width', self.sliderWidth)
         .attr('height', self.sliderHeight)
         .attr('x', self.slider_posX)
@@ -526,23 +582,139 @@ FilterPanel.prototype.drawSlider = function (filterName) {
         .call(brush);
 
     brush
-        .on("end", function(d){ self.brushed(filterName)})
+        .on("end", function (d) {self.brushed(filterName)})
 
-    // tuitionSliderGroup
-    //     .append('rect')
-    //     .attr('id', 'tuitionBar')
-    //     .attr('width', self.sliderWidth)
-    //     .attr('height', self.sliderHeight)
-    //     .attr('x', self.margin.left)
-    //     .attr('y', self.sliderPosition + self.sliderSpacing*0)
+    var histogram_arr = []
+    
 
+    //self.schoolData.sort(function (a,b) {return d3.ascending(a.value[filterName], b.value[filterName])})
+
+    self.schoolData.forEach(function (d) {histogram_arr.push(d[filterName])})
+
+    self.histogram_arr_alt[filterName] = histogram_arr
+
+    histogram_arr = self.histogram_arr_alt[filterName].sort(d3.ascending)
+
+    var histogram = d3.histogram()
+        .domain(slider_xScale.domain())
+        .thresholds(slider_xScale.ticks(self.ticksCount))
+
+    var bins = histogram(histogram_arr)
+        
+    var yScale = d3.scaleLinear()
+        .domain([0, d3.max(bins, function(d) {return d.length})])
+        .range([0, self.freqDistGroupHeight]);
+
+    var line_xScale = d3.scaleLinear()
+        .domain([d3.min(bins, function (d) {return (d.x0 + d.x1)/2}), d3.max(bins, function(d) {return (d.x0 + d.x1)/2})])
+        .range([0, self.freqDistGroupWidth]);
+
+    var freqDistGroup = filterPanelSVG
+        .append("g")
+        .attr("transform", "translate(" + self.freqDistGroup_posX + "," + self.freqDistGroup_posY + ") scale(1, -1)")
+        .selectAll('circle')
+        .data(bins)
+        .enter()
+        .append('circle')   
+        .attr('cx', function (d) {return line_xScale((d.x0 + d.x1)/2)})
+        .attr('cy', function (d) {return yScale(d.length)})
+        .attr('r', 5)
+        .attr('fill','purple')
+
+    var valueline = d3.line()
+        // .interpolate("basis")
+        .x(function(d) { return line_xScale((d.x0 + d.x1)/2); })
+        .y(function(d) { return yScale(d.length); })
+        .curve(d3.curveBasis)
+        //.curve(d3.curveCardinal);
+
+    var lineGroup = filterPanelSVG
+        .append('g')
+        .attr("transform", "translate(" + self.freqDistGroup_posX + "," + self.freqDistGroup_posY + ") scale(1, -1)")
+        .append("path")
+        .attr("class", "line")
+        .attr("d", valueline(bins));
+
+    var areaBelowLine = d3.area()
+        .x(function(d) { return line_xScale((d.x0 + d.x1)/2); })
+        .y0(0)
+        .y1(function(d) { return yScale(d.length);})
+        .curve(d3.curveBasis)
+
+    var areaAboveLine = d3.area()
+        .x(function(d) { return line_xScale((d.x0 + d.x1)/2); })
+        .y0(self.freqDistGroupHeight)
+        .y1(function(d) { return yScale(d.length);})
+        .curve(d3.curveBasis)
+
+
+    var area_test = d3.area()
+        .x(function(d) { return line_xScale((d.x0 + d.x1)/2); })
+        .y0(0)
+        .y1(function(d) { return yScale(d.length);})
+        .curve(d3.curveBasis)
+
+    var areaBelowLineGroup = filterPanelSVG
+        .append('g')
+        .attr("transform", "translate(" + self.freqDistGroup_posX + "," + self.freqDistGroup_posY + ") scale(1, -1)")
+        .append("path")
+        .attr("class", "area")
+        .attr("d", areaBelowLine(bins))
+        .style('fill', 'blue')
+
+    var areaSelection = filterPanelSVG
+        .append('g')
+        .attr("transform", "translate(" + self.freqDistGroup_posX + "," + self.freqDistGroup_posY + ") scale(1, -1)")
+        .append('rect')
+        .attr('width',100)
+        .attr('height',self.freqDistGroupHeight)
+        .attr('fill','green')
+
+    var areaAboveLineGroup = filterPanelSVG
+        .append('g')
+        .attr("transform", "translate(" + self.freqDistGroup_posX + "," + self.freqDistGroup_posY + ") scale(1, -1)")
+        .append("path")
+        .attr("class", "area")
+        .attr("d", areaAboveLine(bins))
+        .style('fill', 'white')
+        .style('stroke','white')
 
 }
 
 FilterPanel.prototype.applyFilters = function () {
     var self = this
-    self.selectData()
+
+    //console.log('apply filters')
+    var schools = {}
+
+    for (index in self.selectedSchools) {
+        var schoolData = self.selectedSchools[index];
+        var similarSchools = {};
+        for (var id in self.similarityData[schoolData['UNITID']]) {
+            similarSchools[id] = id;
+        }
+        schoolData.similarSchools = similarSchools;
+        schools[schoolData['UNITID']] = schoolData;
+    }
+
+    for (schoolId in schools) {
+        var schoolData = schools[schoolId];
+        for (similarSchoolId in schoolData.similarSchools) {
+            if (!schools[similarSchoolId]) {
+                delete schoolData.similarSchools[similarSchoolId]
+            }
+            else {
+                schoolData.similarSchools[similarSchoolId] = schools[similarSchoolId]
+            }
+        }
+        //schoolData.similarSchools = Object.keys(schoolData.similarSchools).slice(0,15)
+        schoolData.similarSchools = Object.values(schoolData.similarSchools).slice(0,15)
+    }
+
+    self.selectedSchools = Object.values(schools);
+
     self.barChart.updateData(self.selectedSchools)
+
     d3.selectAll('.FilterPanelDiv').remove()
     d3.select('#filterDiv').remove()
     delete self
