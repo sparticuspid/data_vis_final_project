@@ -270,18 +270,21 @@ Script.prototype.clickFilter = function () {
     var self = this
 
     d3.csv("data/similarity_rankings_top30.csv", function (similarityData) {
-        data = {}
+        d3.csv("data/state_lookup_data.csv", function (states) {
 
-        for (var row in similarityData) {
-            var similarSchools = {}
-            for (var i = 1; i <= 30; i++) {
-                similarSchools[similarityData[row]['Similar School ' + i]] = similarityData[row]['Similar School ' + i]
+            data = {}
+
+            for (var row in similarityData) {
+                var similarSchools = {}
+                for (var i = 1; i <= 30; i++) {
+                    similarSchools[similarityData[row]['Similar School ' + i]] = similarityData[row]['Similar School ' + i]
+                }
+                data[similarityData[row]['UNITID']] = similarSchools;
             }
-            data[similarityData[row]['UNITID']] = similarSchools;
-        }
 
-        var filterPanel = new FilterPanel(self.barChart, self.schoolData, self.nation, data);
-        //filterPanel.update()
+            var filterPanel = new FilterPanel(self.barChart, self.schoolData, self.nation, data, states);
+            //filterPanel.update()
+        })
     });
 
 }
